@@ -267,6 +267,10 @@ This avoids the overhead of an internal R installation if it is known that share
 It is most useful for streamlining applications where developers can (i) test that no conflicts occur in the installed subset of `r Biocpkg("basilisk")` clients and/or (ii) control the versions of system libraries used by R.
 This option only has an effect if `BASILISK_USE_SYSTEM_DIR` is set, as otherwise the fallback R installation is only created upon encountering version conflicts.
 
+If `BASILISK_EXTERNAL_CONDA` is set to a read-only conda installation or if both `BASILISK_EXTERNAL_CONDA` and `BASILISK_USE_SYSTEM_DIR` are set,
+it may be necessary to set the `BASILISK_EXTERNAL_FALLBACK_R` environment variable. 
+This should refer to an absolute path to an existing conda environment containing the fallback R environment.
+
 ## Using _basilisk_ directly for analyses
 
 While `r Biocpkg("basilisk")` is primarily intended for package developers, end users can also take advantage of its graceful handling of multiple Python environments in complex workflows.
