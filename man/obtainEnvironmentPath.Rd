@@ -25,12 +25,12 @@ if (.Platform$OS.type != "windows") {
 
  tmploc <- file.path(tempdir(), "my_package_A")
  if (!file.exists(tmploc)) {
-     setupBasiliskEnv(tmploc, c('pandas=1.4.3'))
+     setupBasiliskEnv(tmploc, c('pandas=2.2.3'))
  }
  obtainEnvironmentPath(tmploc)
 
  env <- BasiliskEnvironment("test_env", "basilisk", 
-     packages=c("scikit-learn=1.1.1", "pandas=1.43.1"))
+     packages=c("scikit-learn=1.6.1", "pandas=2.2.3"))
  \dontrun{obtainEnvironmentPath(env)}
 }
 }

@@ -86,7 +86,7 @@ if (.Platform$OS.type != "windows") {
 
  tmploc <- file.path(tempdir(), "my_package_A")
  if (!file.exists(tmploc)) {
-     setupBasiliskEnv(tmploc, c('pandas=1.4.3'))
+     setupBasiliskEnv(tmploc, c('pandas=2.2.3'))
  }
 }
 

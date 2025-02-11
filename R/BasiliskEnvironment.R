@@ -26,7 +26,7 @@
 #' 
 #' @examples
 #' BasiliskEnvironment("my_env1", "AaronPackage", 
-#'     packages=c("scikit-learn=1.1.1", "pandas=1.43.1"))
+#'     packages=c("scikit-learn=1.6.1", "pandas=2.2.3"))
 #' @docType class
 #' @name BasiliskEnvironment-class
 #' @aliases BasiliskEnvironment-class

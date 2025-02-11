@@ -5,3 +5,5 @@ man/INTERNAL_*
 *.rds
 *.swp
 vignettes/basilisk-vignette-test*
+.DS_Store
+.Rhistory

@@ -32,7 +32,7 @@ Thus, any Python package vendored into the R package should be stored in the \co
 
 \examples{
 BasiliskEnvironment("my_env1", "AaronPackage", 
-    packages=c("scikit-learn=1.1.1", "pandas=1.43.1"))
+    packages=c("scikit-learn=1.6.1", "pandas=2.2.3"))
 }
 \author{
 Aaron lun
