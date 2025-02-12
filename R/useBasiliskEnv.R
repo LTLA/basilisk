@@ -45,16 +45,14 @@
 #'
 #' @export
 #' @import basilisk.utils
-#' @importFrom reticulate use_condaenv py_config
+#' @importFrom reticulate use_virtualenv py_config
 useBasiliskEnv <- function(envpath, full.activation=NA) {
     envpath <- normalizePath(envpath, mustWork=TRUE)
+    use_virtualenv(envpath, required=TRUE)
 
-    activateEnvironment(envpath, full.activation=full.activation)
-    reticulate::use_condaenv(envpath, required=TRUE)
-
-    # use_condaenv doesn't actually cause Python to be loaded immediately, 
+    # use_virtualenv doesn't actually cause Python to be loaded immediately, 
     # so we force the issue to seal the deal.
-    reticulate::py_config() 
+    py_config() 
 
     invisible(NULL)
 }

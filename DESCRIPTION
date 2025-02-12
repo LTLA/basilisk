@@ -10,8 +10,7 @@ Imports:
     utils,
     methods,
     parallel,
-    dir.expiry,
-    basilisk.utils (>= 1.15.1)
+    dir.expiry
 Suggests:
     knitr,
     rmarkdown,

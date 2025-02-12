@@ -76,11 +76,15 @@
 #' \code{\link{listPackages}}, to list the packages in the conda environment.
 #'
 #' @export
-#' @importFrom reticulate conda_install
+#' @importFrom reticulate install_python virtualenv_install
 setupBasiliskEnv <- function(envpath, packages, channels=NULL, pip=NULL, paths=NULL) {
     packages <- sub("([^=])=([^=])", "\\1==\\2", packages)
     packages <- c(packages, pip)
     .check_versions(packages, "[^=<>]==[0-9]")
+
+    success <- FALSE
+    unlink2(envpath)
+    on.exit(if (!success) unlink2(envpath), add=TRUE, after=FALSE)
 
     # Determining the Python version to use (possibly from `packages=`).
     if (any(is.py <- grepl("^python=", packages))) {
@@ -88,24 +92,23 @@ setupBasiliskEnv <- function(envpath, packages, channels=NULL, pip=NULL, paths=N
     } else {
         version <- "3.12"
     }
+    py.cmd <- suppressMessages(install_python(version))
 
-    success <- FALSE
-    unlink2(envpath)
-    dir.create2(envpath)
-    on.exit(if (!success) unlink2(envpath), add=TRUE, after=FALSE)
-
-    install_python(version)
+    # Forcing it to be interpreted as a path, not a name.
+    if (!grepl("[/\\]", envpath)) {
+        envpath <- file.path(getwd(), envpath)
+    }
 
     virtualenv_install(
-        envname=normalizePath(envpath), 
-        python_version=version,
+        envname=envpath, 
+        python_version=py.cmd,
         packages=packages,
     )
 
     if (length(paths)) {
-        env.py <- getPythonBinary(envpath)
+        pip.cmd <- c("-m", "pip", "install", "--no-user")
         for (p in paths) {
-            result <- system2(env.py, c(pip.cmd, p))
+            result <- system2(py.cmd, c(pip.cmd, p))
         }
     }
 

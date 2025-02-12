@@ -4,13 +4,7 @@
 \alias{setupBasiliskEnv}
 \title{Set up \pkg{basilisk}-managed environments}
 \usage{
-setupBasiliskEnv(
-  envpath,
-  packages,
-  channels = "conda-forge",
-  pip = NULL,
-  paths = NULL
-)
+setupBasiliskEnv(envpath, packages, channels = NULL, pip = NULL, paths = NULL)
 }
 \arguments{
 \item{envpath}{String containing the path to the environment to use.}
