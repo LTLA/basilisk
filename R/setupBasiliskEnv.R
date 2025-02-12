@@ -77,63 +77,30 @@
 #'
 #' @export
 #' @importFrom reticulate conda_install
-setupBasiliskEnv <- function(envpath, packages, channels="conda-forge", pip=NULL, paths=NULL) {
-    packages <- sub("==", "=", packages)
-    .check_versions(packages, "[^=<>]=[0-9]")
-
-    previous <- activateEnvironment()
-    on.exit(deactivateEnvironment(previous))
-
-    base.dir <- getCondaDir()
-    conda.cmd <- getCondaBinary(base.dir)
+setupBasiliskEnv <- function(envpath, packages, channels=NULL, pip=NULL, paths=NULL) {
+    packages <- sub("([^=])=([^=])", "\\1==\\2", packages)
+    packages <- c(packages, pip)
+    .check_versions(packages, "[^=<>]==[0-9]")
 
     # Determining the Python version to use (possibly from `packages=`).
     if (any(is.py <- grepl("^python=", packages))) {
         version <- sub("^python=+", "", packages[is.py][1])
     } else {
-        version <- .python_version(base.dir)
+        version <- "3.12"
     }
 
     success <- FALSE
     unlink2(envpath)
     dir.create2(envpath)
     on.exit(if (!success) unlink2(envpath), add=TRUE, after=FALSE)
-    
-    conda_install(
+
+    install_python(version)
+
+    virtualenv_install(
         envname=normalizePath(envpath), 
-        conda=conda.cmd, 
-        python_version=version, 
+        python_version=version,
         packages=packages,
-        channel=channels,
-        additional_create_args="--override-channels",
-        additional_install_args="--override-channels"
     )
-
-    pip.cmd <- c("-m", "pip", "install", "--no-user")
-
-    # Hack to pick up the site-packages correctly for conda-forge-derived
-    # Python2, which doesn't seem to be configured correctly, unfortunately.
-    # (Based on testing with some of crisprScore's environments.)
-    if (!identical(Sys.getenv("BASILISK_USE_MINIFORGE", NA), "0")) {
-        if (version == "2" || startsWith(version, "2.")) {
-            old <- Sys.getenv("PYTHONPATH", NA)
-            if (is.na(old)) {
-                on.exit(Sys.unsetenv("PYTHONPATH"), add=TRUE, after=FALSE)
-            } else {
-                on.exit(Sys.setenv(PYTHONPATH=old), add=TRUE, after=FALSE)
-            }
-            Sys.setenv(PYTHONPATH=file.path(envpath, "site-packages"))
-        }
-    }
-
-    if (length(pip)) {
-        .check_versions(pip, "==")
-        env.py <- getPythonBinary(envpath)
-        result <- system2(env.py, c(pip.cmd, pip))
-        if (result!=0L) {
-            stop("failed to install additional packages via pip")
-        }
-    }
 
     if (length(paths)) {
         env.py <- getPythonBinary(envpath)

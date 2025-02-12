@@ -12,12 +12,11 @@
 #' \item \code{envname}, string containing the name of the environment.
 #' Environment names starting with an underscore are reserved for internal use.
 #' \item \code{pkgname}, string containing the name of the package that owns the environment.
-#' \item \code{packages}, character vector containing the names of the required Python packages from conda,
+#' \item \code{packages}, character vector containing the names of the required Python packages from PyPI.
 #' see \code{\link{setupBasiliskEnv}} for requirements.
-#' \item \code{channels}, character vector specifying the Conda channels to search,
-#' see \code{\link{setupBasiliskEnv}} for detials.
-#' \item \code{pip}, character vector containing names of additional Python packages from PyPi,
-#' see \code{\link{setupBasiliskEnv}} for requirements.
+#' \item \code{channels}, deprecated and ignored.
+#' \item \code{pip}, appended to \code{packages}.
+#' Provided for back-compatibility only.
 #' \item \code{paths}, character vector containing relative paths to Python packages to be installed via \code{pip}.
 #' These paths are interpreted relative to the system directory of \code{pkgname},
 #' i.e., they are appended to the output of \code{\link{system.file}} to obtain absolute paths for \code{\link{setupBasiliskEnv}}.
@@ -34,13 +33,20 @@
 NULL
 
 #' @export
-setClass("BasiliskEnvironment", slots=c(envname="character", pkgname="character", 
-    packages="character", channels="character", pip="character", paths="character"))
+setClass(
+    "BasiliskEnvironment",
+    slots=c(
+        envname="character",
+        pkgname="character", 
+        packages="character",
+        paths="character"
+    )
+)
 
 #' @export
 #' @import methods 
-BasiliskEnvironment <- function(envname, pkgname, packages, channels="conda-forge", pip=character(0), paths=character(0)) {
-    new("BasiliskEnvironment", envname=envname, pkgname=pkgname, packages=packages, channels=channels, pip=pip, paths=paths)
+BasiliskEnvironment <- function(envname, pkgname, packages, channels=NULL, pip=character(0), paths=character(0)) {
+    new("BasiliskEnvironment", envname=envname, pkgname=pkgname, packages=c(packages, pip), paths=paths)
 }
 
 setValidity("BasiliskEnvironment", function(object) {
@@ -57,16 +63,8 @@ setValidity("BasiliskEnvironment", function(object) {
         msg <- c(msg, "'pkgname' should be a non-NA string")
     }
 
-    if (any(is.na(.getChannels(object)))) {
-        msg <- c(msg, "'channels' should not contain NA strings")
-    }
-
     if (any(is.na(.getPackages(object)))) {
         msg <- c(msg, "'packages' should not contain NA strings")
-    }
-
-    if (any(is.na(.getPipPackages(object)))) {
-        msg <- c(msg, "'pip' should not contain NA strings")
     }
 
     if (any(is.na(.getPipPaths(object)))) {
@@ -92,11 +90,6 @@ setMethod(".getEnvName", "character", identity)
 
 setMethod(".getPkgName", "character", function(x) NULL) 
 
-# Until all dependencies bump their version numbers to trigger a rebuild.
-.getChannels <- function(x) tryCatch(x@channels, error=function(e) "conda-forge")
-
 .getPackages <- function(x) x@packages
-
-.getPipPackages <- function(x) x@pip
 
 .getPipPaths <- function(x) x@paths

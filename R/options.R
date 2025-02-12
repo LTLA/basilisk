@@ -7,7 +7,6 @@
 #' \itemize{
 #' \item For \code{setBasiliskFork}, whether forking should be used when available.
 #' \item For \code{setBasiliskShared}, whether the shared Python instance can be set in the R session.
-#' \item For \code{setBasiliskForceFallback}, whether to force the use of the last resort fallback.
 #' \item For \code{setBasiliskCheckVersions}, whether to check for properly versioned package strings in \code{\link{setupBasiliskEnv}}.
 #' }
 #'
@@ -33,7 +32,6 @@
 #'
 #' Developers may wish to set \code{setBasiliskShared(FALSE)} and \code{setBasiliskFork(FALSE)} during unit testing,
 #' to ensure that their functions do not make incorrect assumptions about the calling environment used in \code{\link{basiliskRun}}.
-#' Similarly, setting \code{setBasiliskForceFallback(TRUE)} is useful for testing that \code{\link{basiliskRun}} works inside a minimalistic R installation.
 #'
 #' @section Disabling package version checks:
 #' By default, \code{\link{setupBasiliskEnv}} requires versions for all requested Python packages.
@@ -52,6 +50,10 @@
 #' 
 #' @seealso
 #' \code{\link{basiliskStart}}, where these options are used.
+#'
+#' @aliases
+#' getBasiliskForceFallback
+#' setBasiliskForceFallback
 #' @export
 #' @rdname basiliskOptions
 getBasiliskFork <- function() {
@@ -83,12 +85,14 @@ setBasiliskShared <- function(value) {
 #' @export
 #' @rdname basiliskOptions
 getBasiliskForceFallback <- function() {
+    .Deprecated()
     globals$get("force.fallback")
 }
 
 #' @export
 #' @rdname basiliskOptions
 setBasiliskForceFallback <- function(value) {
+    .Deprecated()
     .check_logical(value)
     globals$set(force.fallback=value)
     value
