@@ -1,6 +1,6 @@
-#' Create a local conda environment manually
+#' Manually create a local virtual environment manually
 #'
-#' Manually create a local conda environment with versioning and thread safety.
+#' Manually create a local virtual environment with versioning and thread safety.
 #' This is intended for use in analysis workflows rather than package development.
 #'
 #' @param dir String containing the path to a directory in which the local environment is to be stored.
@@ -54,8 +54,7 @@ createLocalBasiliskEnv <- function(dir, ...) {
         setupBasiliskEnv(envpath, ...)
     }
 
-    # Touching both the individual package directory _and_ the conda
-    # directory on successful acquisition of the path.
+    # Making sure that everyone knows it's in use.
     touchDirectory(envpath)
 
     envpath

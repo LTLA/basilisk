@@ -1,13 +1,8 @@
 #' List packages
 #'
-#' List the set of Python packages (and their version numbers) that are installed in an conda environment.
+#' List the set of Python packages (and their version numbers) that are installed in a virtual environment.
 #'
 #' @inheritParams basiliskStart
-#'
-#' @details
-#' This is provided for informational purposes only;
-#' developers should not expect the same core packages to be present across operating systems.
-#' \code{?\link{installConda}} has some more comments on the version of the conda installer used for each operating system.
 #'
 #' @author Aaron Lun
 #'
@@ -17,11 +12,17 @@
 #' For \code{listPythonVersion}, a string containing the default version of Python.
 #' 
 #' @examples
-#' listPackages()
-#' listPythonVersion()
+#' if (.Platform$OS.type != "windows") {
+#'   tmploc <- file.path(tempdir(), "my_package_A")
+#'   if (!file.exists(tmploc)) {
+#'       setupBasiliskEnv(tmploc, c('pandas=1.4.3'))
+#'   }
+#'   listPackages(tmploc)
+#'   listPythonVersion(tmploc)
+#' }
 #' 
 #' @export
-listPackages <- function(env=NULL) {
+listPackages <- function(env) {
     envpath <- obtainEnvironmentPath(env)
     out <- .basilisk_freeze(envpath)
     data.frame(full=out, package=.full2pkg(out), stringsAsFactors=FALSE)
@@ -39,14 +40,7 @@ listPackages <- function(env=NULL) {
 
 #' @export
 #' @rdname listPackages
-listCorePackages <- function() {
-    .Deprecated(new="listPackages")
-    listPackages()
-}
-
-#' @export
-#' @rdname listPackages
-listPythonVersion <- function(env=NULL) {
+listPythonVersion <- function(env) {
     envpath <- obtainEnvironmentPath(env)
     .python_version(envpath)
 }
