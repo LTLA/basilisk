@@ -28,11 +28,8 @@
 #' }
 #'
 #' @export
-#' @importFrom basilisk.utils installConda
 #' @importFrom dir.expiry lockDirectory unlockDirectory touchDirectory
 createLocalBasiliskEnv <- function(dir, ...) {
-    installConda()
-
     dir.create(dir, showWarnings=FALSE)
     dir <- normalizePath(dir)
 

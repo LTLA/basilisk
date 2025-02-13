@@ -31,9 +31,7 @@ basiliskRun(
 \arguments{
 \item{env}{A \linkS4class{BasiliskEnvironment} object specifying the \pkg{basilisk} environment to use.
 
-Alternatively, a string specifying the path to an environment, though this should only be used for testing purposes.
-
-Alternatively, \code{NULL} to indicate that the base Conda installation should be used as the environment.}
+Alternatively, a string specifying the path to an environment, though this should only be used for testing purposes.}
 
 \item{full.activation}{Deprecated and ignored.}
 
@@ -149,69 +147,47 @@ Advanced users may consider setting the environment variable \code{BASILISK_USE_
 This will place both the base installation and the environments in the R system directory, which simplifies permission management and avoids duplication in enterprise settings.
 }
 
-\section{Persistence of environment variables}{
-
-When \code{shared=TRUE} and if no Python instance has already been loaded into the current R session, 
-a side-effect of \code{basiliskStart} is that it will modify a number of environment variables.
-This is done to mimic activation of the Conda environment located at \code{env}.
-Importantly, old values for these variables will \emph{not} be restored upon \code{basiliskStop}.
-
-This behavior is intentional as (i) the correct use of the Conda-derived Python depends on activation and (ii) the loaded Python persists for the entire R session.
-It may not be safe to reset the environment variables and \dQuote{deactivate} the environment while the Conda-derived Python instance is effectively still in use.
-(In practice, lack of activation is most problematic on Windows due to its dependence on correct \code{PATH} specification for dynamic linking.)
-
-If persistence is not desirable, users should set \code{shared=FALSE} via \code{\link{setBasiliskShared}}.
-This will limit any modifications to the environment variables to a separate R process.
-}
-
 \examples{
 if (.Platform$OS.type != "windows") {
- \dontshow{basilisk.utils::installConda()}
+  tmploc <- file.path(tempdir(), "my_package_A")
+  if (!file.exists(tmploc)) {
+      setupBasiliskEnv(tmploc, c('pandas=2.2.3'))
+  }
 
- # Creating an environment (note, this is not necessary
- # when supplying a BasiliskEnvironment to basiliskStart):
- tmploc <- file.path(tempdir(), "my_package_A")
- if (!file.exists(tmploc)) {
-     setupBasiliskEnv(tmploc, c('pandas=2.2.3'))
- }
+  # Pulling out the pandas version, as a demonstration:
+  cl <- basiliskStart(tmploc, testload="pandas")
+  basiliskRun(proc=cl, function() { 
+      X <- reticulate::import("pandas"); X$`__version__` 
+  })
+  basiliskStop(cl)
 
- # Pulling out the pandas version, as a demonstration:
- cl <- basiliskStart(tmploc, testload="pandas")
- basiliskRun(proc=cl, function() { 
-     X <- reticulate::import("pandas"); X$`__version__` 
- })
- basiliskStop(cl)
+  # This happily co-exists with our other environment:
+  tmploc2 <- file.path(tempdir(), "my_package_B")
+  if (!file.exists(tmploc2)) {
+      setupBasiliskEnv(tmploc2, c('pandas=2.2.2'))
+  }
+  
+  cl2 <- basiliskStart(tmploc2, testload="pandas")
+  basiliskRun(proc=cl2, function() { 
+      X <- reticulate::import("pandas"); X$`__version__` 
+  })
+  basiliskStop(cl2)
 
- # This happily co-exists with our other environment:
- tmploc2 <- file.path(tempdir(), "my_package_B")
- if (!file.exists(tmploc2)) {
-     setupBasiliskEnv(tmploc2, c('pandas=2.2.2'))
- }
- 
- cl2 <- basiliskStart(tmploc2, testload="pandas")
- basiliskRun(proc=cl2, function() { 
-     X <- reticulate::import("pandas"); X$`__version__` 
- })
- basiliskStop(cl2)
-
- # Persistence of variables is possible within a Start/Stop pair.
- cl <- basiliskStart(tmploc)
- basiliskRun(proc=cl, function(store) {
-     store$snake.in.my.shoes <- 1
-     invisible(NULL)
- }, persist=TRUE)
- basiliskRun(proc=cl, function(store) {
-     return(store$snake.in.my.shoes)
- }, persist=TRUE)
- basiliskStop(cl)
+  # Persistence of variables is possible within a Start/Stop pair.
+  cl <- basiliskStart(tmploc)
+  basiliskRun(proc=cl, function(store) {
+      store$snake.in.my.shoes <- 1
+      invisible(NULL)
+  }, persist=TRUE)
+  basiliskRun(proc=cl, function(store) {
+      return(store$snake.in.my.shoes)
+  }, persist=TRUE)
+  basiliskStop(cl)
 }
 
 }
 \seealso{
 \code{\link{setupBasiliskEnv}}, to set up the Python environments.
-
-\code{\link[basilisk.utils]{activateEnvironment}} in the
-\pkg{basilisk.utils} package.
 
 \code{\link{getBasiliskFork}} and \code{\link{getBasiliskShared}}, to control various global options.
 }

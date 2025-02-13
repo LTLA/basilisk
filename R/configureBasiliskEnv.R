@@ -73,7 +73,6 @@ configureBasiliskEnv <- function(src="R/basilisk.R") {
     invisible(NULL)
 }
 
-#' @importFrom basilisk.utils getSystemDir
 .get_env_system_dir <- function(pkgname, installed=FALSE) {
     vdir <- getSystemDir(pkgname, installed=installed)
     file.path(vdir, "basilisk")

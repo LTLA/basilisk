@@ -13,38 +13,25 @@
 #' @details
 #' It is unlikely that developers should ever need to call \code{\link{useBasiliskEnv}} directly.
 #' Rather, this interaction should be automatically handled by \code{\link{basiliskStart}}.
-#' 
-#' This function will modify a suite of environment variables as a side effect
-#' - see \dQuote{Persistence of environment variables} in \code{?\link{basiliskStart}} for the rationale.
 #'
 #' @author Aaron Lun
 #' 
 #' @examples
 #' if (.Platform$OS.type != "windows") {
-#'  \dontshow{basilisk.utils::installConda()}
+#'   tmploc <- file.path(tempdir(), "my_package_A")
+#'   if (!file.exists(tmploc)) {
+#'       setupBasiliskEnv(tmploc, c('pandas==2.2.3'))
+#'   }
 #' 
-#'  tmploc <- file.path(tempdir(), "my_package_A")
-#'  if (!file.exists(tmploc)) {
-#'      setupBasiliskEnv(tmploc, c('pandas==2.2.3'))
-#'  }
-#' 
-#'  # This may or may not work, depending on whether a Python instance
-#'  # has already been loaded into this R session.
-#'  try(useBasiliskEnv(tmploc))
-#' 
-#'  # This will definitely not work, as the available Python is already set.
-#'  baseloc <- basilisk.utils::getCondaDir()
-#'  status <- try(useBasiliskEnv(baseloc))
-#' 
-#'  # ... except on Windows, which somehow avoids tripping the error.
-#'  stopifnot(is(status, "try-error") || basilisk.utils::isWindows())
+#'   # This may or may not work, depending on whether a Python instance
+#'   # has already been loaded into this R session.
+#'   try(useBasiliskEnv(tmploc))
 #' }
 #'
 #' @seealso
 #' \code{\link{basiliskStart}}, for how these \pkg{basilisk} environments should be used.
 #'
 #' @export
-#' @import basilisk.utils
 #' @importFrom reticulate use_virtualenv py_config
 useBasiliskEnv <- function(envpath, full.activation=NA) {
     envpath <- normalizePath(envpath, mustWork=TRUE)

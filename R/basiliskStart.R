@@ -101,26 +101,10 @@
 #' Advanced users may consider setting the environment variable \code{BASILISK_USE_SYSTEM_DIR} to 1 when installing \pkg{basilisk} and its client packages from source.
 #' This will place both the base installation and the environments in the R system directory, which simplifies permission management and avoids duplication in enterprise settings.
 #'
-#' @section Persistence of environment variables:
-#' When \code{shared=TRUE} and if no Python instance has already been loaded into the current R session, 
-#' a side-effect of \code{basiliskStart} is that it will modify a number of environment variables.
-#' This is done to mimic activation of the Conda environment located at \code{env}.
-#' Importantly, old values for these variables will \emph{not} be restored upon \code{basiliskStop}.
-#'
-#' This behavior is intentional as (i) the correct use of the Conda-derived Python depends on activation and (ii) the loaded Python persists for the entire R session.
-#' It may not be safe to reset the environment variables and \dQuote{deactivate} the environment while the Conda-derived Python instance is effectively still in use.
-#' (In practice, lack of activation is most problematic on Windows due to its dependence on correct \code{PATH} specification for dynamic linking.)
-#' 
-#' If persistence is not desirable, users should set \code{shared=FALSE} via \code{\link{setBasiliskShared}}.
-#' This will limit any modifications to the environment variables to a separate R process.
-#'
 #' @author Aaron Lun
 #'
 #' @seealso
 #' \code{\link{setupBasiliskEnv}}, to set up the Python environments.
-#'
-#' \code{\link[basilisk.utils]{activateEnvironment}} in the
-#' \pkg{basilisk.utils} package.
 #'
 #' \code{\link{getBasiliskFork}} and \code{\link{getBasiliskShared}}, to control various global options.
 #' 
@@ -165,7 +149,6 @@
 #' @export
 #' @importFrom parallel makePSOCKcluster clusterCall makeForkCluster
 #' @importFrom reticulate py_config py_available
-#' @importFrom basilisk.utils activateEnvironment getFallbackREnv
 basiliskStart <- function(env, full.activation=NA, fork=getBasiliskFork(), shared=getBasiliskShared(), testload=NULL) {
     envpath <- obtainEnvironmentPath(env)
 

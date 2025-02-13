@@ -2,22 +2,17 @@
 % Please edit documentation in R/listCorePackages.R
 \name{listPackages}
 \alias{listPackages}
-\alias{listCorePackages}
 \alias{listPythonVersion}
 \title{List packages}
 \usage{
-listPackages(env = NULL)
+listPackages(env)
 
-listCorePackages()
-
-listPythonVersion(env = NULL)
+listPythonVersion(env)
 }
 \arguments{
 \item{env}{A \linkS4class{BasiliskEnvironment} object specifying the \pkg{basilisk} environment to use.
 
-Alternatively, a string specifying the path to an environment, though this should only be used for testing purposes.
-
-Alternatively, \code{NULL} to indicate that the base Conda installation should be used as the environment.}
+Alternatively, a string specifying the path to an environment, though this should only be used for testing purposes.}
 }
 \value{
 For \code{listPackages}, a data.frame containing the \code{full}, a versioned package string, and \code{package}, the package name.
@@ -25,16 +20,17 @@ For \code{listPackages}, a data.frame containing the \code{full}, a versioned pa
 For \code{listPythonVersion}, a string containing the default version of Python.
 }
 \description{
-List the set of Python packages (and their version numbers) that are installed in an conda environment.
-}
-\details{
-This is provided for informational purposes only;
-developers should not expect the same core packages to be present across operating systems.
-\code{?\link{installConda}} has some more comments on the version of the conda installer used for each operating system.
+List the set of Python packages (and their version numbers) that are installed in a virtual environment.
 }
 \examples{
-listPackages()
-listPythonVersion()
+if (.Platform$OS.type != "windows") {
+  tmploc <- file.path(tempdir(), "my_package_A")
+  if (!file.exists(tmploc)) {
+      setupBasiliskEnv(tmploc, c('pandas=1.4.3'))
+  }
+  listPackages(tmploc)
+  listPythonVersion(tmploc)
+}
 
 }
 \author{
