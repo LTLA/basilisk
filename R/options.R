@@ -36,11 +36,11 @@
 #' @section Disabling package version checks:
 #' By default, \code{\link{setupBasiliskEnv}} requires versions for all requested Python packages.
 #' However, in some cases, the exact version of the packages may not be known beforehand.
-#' Developers can set \code{setBasiliskCheckVersions(FALSE)} to disable all version checks, instead allowing conda to choose appropriate versions for the initial installation.
+#' Developers can set \code{setBasiliskCheckVersions(FALSE)} to disable all version checks, instead allowing \code{pip} to choose appropriate versions for the initial installation.
 #' The resulting environment can then be queried using \code{\link{listPackages}} to obtain the explicit versions of all Python packages.
 #'
 #' Needless to say, this option should only be used during the initial phases of developing a \pkg{basilisk} client.
-#' Once a suitable environment is created by conda, Python package versions should be pinned in \code{\link{setupBasiliskEnv}}.
+#' Once a suitable environment is created, Python package versions should be pinned in \code{\link{setupBasiliskEnv}}.
 #' This ensures that all users are creating the intended environment for greater reproducibility (and easier debugging).
 #' 
 #' @author Aaron Lun
@@ -51,9 +51,6 @@
 #' @seealso
 #' \code{\link{basiliskStart}}, where these options are used.
 #'
-#' @aliases
-#' getBasiliskForceFallback
-#' setBasiliskForceFallback
 #' @export
 #' @rdname basiliskOptions
 getBasiliskFork <- function() {
@@ -82,22 +79,6 @@ setBasiliskShared <- function(value) {
     value
 }
 
-#' @export
-#' @rdname basiliskOptions
-getBasiliskForceFallback <- function() {
-    .Deprecated()
-    globals$get("force.fallback")
-}
-
-#' @export
-#' @rdname basiliskOptions
-setBasiliskForceFallback <- function(value) {
-    .Deprecated()
-    .check_logical(value)
-    globals$set(force.fallback=value)
-    value
-}
-
 .check_logical <- function(value) {
     if (length(value)!=1 || is.na(value)) {
         stop("'value' should be a non-NA logical scalar")
@@ -117,3 +98,24 @@ setBasiliskCheckVersions <- function(value) {
 getBasiliskCheckVersions <- function() {
     !globals$get("no.version")
 }
+
+globals <- (function () {
+    current <- list(
+        fork=TRUE,
+        shared=TRUE,
+        force.fallback=FALSE,
+        no.version=FALSE
+    )
+
+    list(
+        set=function(...) {
+            replacements <- list(...)
+            common <- intersect(names(current), names(replacements))
+            current[common] <<- replacements[common]
+            invisible(NULL)
+        },
+        get=function(name) {
+            current[[name]]
+        }
+    )
+})()

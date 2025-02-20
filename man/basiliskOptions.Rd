@@ -2,8 +2,6 @@
 % Please edit documentation in R/options.R
 \name{getBasiliskFork}
 \alias{getBasiliskFork}
-\alias{getBasiliskForceFallback}
-\alias{setBasiliskForceFallback}
 \alias{setBasiliskFork}
 \alias{getBasiliskShared}
 \alias{setBasiliskShared}
@@ -18,10 +16,6 @@ setBasiliskFork(value)
 getBasiliskShared()
 
 setBasiliskShared(value)
-
-getBasiliskForceFallback()
-
-setBasiliskForceFallback(value)
 
 setBasiliskCheckVersions(value)
 
@@ -68,11 +62,11 @@ to ensure that their functions do not make incorrect assumptions about the calli
 
 By default, \code{\link{setupBasiliskEnv}} requires versions for all requested Python packages.
 However, in some cases, the exact version of the packages may not be known beforehand.
-Developers can set \code{setBasiliskCheckVersions(FALSE)} to disable all version checks, instead allowing conda to choose appropriate versions for the initial installation.
+Developers can set \code{setBasiliskCheckVersions(FALSE)} to disable all version checks, instead allowing \code{pip} to choose appropriate versions for the initial installation.
 The resulting environment can then be queried using \code{\link{listPackages}} to obtain the explicit versions of all Python packages.
 
 Needless to say, this option should only be used during the initial phases of developing a \pkg{basilisk} client.
-Once a suitable environment is created by conda, Python package versions should be pinned in \code{\link{setupBasiliskEnv}}.
+Once a suitable environment is created, Python package versions should be pinned in \code{\link{setupBasiliskEnv}}.
 This ensures that all users are creating the intended environment for greater reproducibility (and easier debugging).
 }
 

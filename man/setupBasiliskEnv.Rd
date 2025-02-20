@@ -13,8 +13,7 @@ setupBasiliskEnv(envpath, packages, channels = NULL, pip = NULL, paths = NULL)
 \item{packages}{Character vector containing the names of PyPI packages to install into the environment.
 Version numbers must be included.}
 
-\item{channels}{Character vector containing the names of Conda channels to search.
-Defaults to the conda-forge repository.}
+\item{channels}{Deprecated and ignored.}
 
 \item{pip}{Same as \code{packages}.}
 
@@ -66,10 +65,10 @@ Of course, it is possible to specify an entirely different version of Python in 
 }
 \examples{
 if (.Platform$OS.type != "windows") {
-  tmploc <- file.path(tempdir(), "my_package_A")
-  if (!file.exists(tmploc)) {
-      setupBasiliskEnv(tmploc, c('pandas=2.2.3'))
-  }
+    tmploc <- file.path(tempdir(), "my_package_A")
+    if (!file.exists(tmploc)) {
+        setupBasiliskEnv(tmploc, c('pandas=2.2.3'))
+    }
 }
 
 }

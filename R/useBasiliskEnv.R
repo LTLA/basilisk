@@ -3,7 +3,7 @@
 #' Use \pkg{basilisk} environments for isolated execution of Python code with appropriate versions of all Python packages.
 #' 
 #' @param envpath String containing the path to the \pkg{basilisk} environment to use. 
-#' @param full.activation Logical scalar, see \code{\link{activateEnvironment}} for details.
+#' @param full.activation Deprecated and ignored.
 #' 
 #' @return 
 #' The function will attempt to load the specified \pkg{basilisk} environment into the R session,
@@ -45,11 +45,12 @@ useBasiliskEnv <- function(envpath, full.activation=NA) {
 }
 
 #' @importFrom reticulate py_config 
-.same_as_loaded <- function(envpath) 
-# Checking whether we're the same as the existing python instance,
-# which would indicate that we correctly loaded `envpath`.
-{
-    expected <- normalizePath(getPythonBinary(envpath)) 
-    actual <- normalizePath(py_config()$python)
+.same_as_loaded <- function(envpath) {
+    # Checking whether we're the same as the existing python instance, which
+    # would indicate that we correctly loaded `envpath`. The normalization of
+    # the environment ensures that we're matching the path in useBasiliskEnv.
+    # Don't normalize the binary path itself as this is a symlink.
+    expected <- getPythonBinary(normalizePath(envpath))
+    actual <- py_config()$python
     identical(expected, actual)
 }

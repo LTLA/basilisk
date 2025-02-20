@@ -5,8 +5,7 @@
 #' @param envpath String containing the path to the environment to use. 
 #' @param packages Character vector containing the names of PyPI packages to install into the environment.
 #' Version numbers must be included.
-#' @param channels Character vector containing the names of Conda channels to search.
-#' Defaults to the conda-forge repository.
+#' @param channels Deprecated and ignored.
 #' @param pip Same as \code{packages}.
 #' @param paths Character vector containing absolute paths to Python package directories, to be installed by \code{pip}.
 #' 
@@ -53,10 +52,10 @@
 #'
 #' @examples
 #' if (.Platform$OS.type != "windows") {
-#'   tmploc <- file.path(tempdir(), "my_package_A")
-#'   if (!file.exists(tmploc)) {
-#'       setupBasiliskEnv(tmploc, c('pandas=2.2.3'))
-#'   }
+#'     tmploc <- file.path(tempdir(), "my_package_A")
+#'     if (!file.exists(tmploc)) {
+#'         setupBasiliskEnv(tmploc, c('pandas=2.2.3'))
+#'     }
 #' }
 #'
 #' @seealso
@@ -71,8 +70,12 @@ setupBasiliskEnv <- function(envpath, packages, channels=NULL, pip=NULL, paths=N
     .check_versions(packages, "[^=<>]==[0-9]")
 
     success <- FALSE
-    unlink2(envpath)
-    on.exit(if (!success) unlink2(envpath), add=TRUE, after=FALSE)
+    .unlink2(envpath)
+    on.exit({
+        if (!success) {
+            .unlink2(envpath)
+        }
+    }, add=TRUE, after=FALSE)
 
     # Determining the Python version to use (possibly from `packages=`).
     if (any(is.py <- grepl("^python=", packages))) {
@@ -110,6 +113,13 @@ setupBasiliskEnv <- function(envpath, packages, channels=NULL, pip=NULL, paths=N
             stop(paste("versions must be explicitly specified for",
                 paste(sprintf("'%s'", packages[failed]), collapse=", ")))
         }
+    }
+}
+
+.unlink2 <- function(x, recursive=TRUE, force=TRUE, ...) {
+    status <- unlink(x, recursive=recursive, force=force, ...)
+    if (any(failed <- status!=0L)) {
+        stop("failed to remove '", x[failed][1], "'")
     }
 }
 

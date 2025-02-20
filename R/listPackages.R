@@ -29,8 +29,6 @@ listPackages <- function(env) {
 }
 
 .basilisk_freeze <- function(envpath) {
-    previous <- activateEnvironment(envpath)
-    on.exit(deactivateEnvironment(previous))
     system2(getPythonBinary(envpath), c("-m", "pip", "list", "--format", "freeze"), stdout=TRUE)
 }
 

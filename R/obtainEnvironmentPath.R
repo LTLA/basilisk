@@ -69,7 +69,7 @@ obtainEnvironmentPath <- function(env) {
                 paths=file.path(getSystemDir(pkgname, installed=TRUE), .getPipPaths(env))) # package must already be installed to get to this point.
         }
 
-        # Touching both the individual package directory _and_ the conda
+        # Touching both the individual package directory _and_ the overall
         # directory on successful acquisition of the path.
         touchDirectory(envdir)
         touchDirectory(exdir)

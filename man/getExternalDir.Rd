@@ -2,7 +2,7 @@
 % Please edit documentation in R/getExternalDir.R
 \name{getExternalDir}
 \alias{getExternalDir}
-\title{Get an external conda directory}
+\title{External directory for virtual environments}
 \usage{
 getExternalDir()
 }
@@ -11,7 +11,7 @@ String containing a path to an appropriate external folder.
 The last component of the path will always be the \pkg{basilisk} version number.
 }
 \description{
-Define an external location for installing the conda instance and \pkg{basilisk} environments.
+Define an external location for installing the virtual environments managed by \pkg{basilisk}.
 }
 \details{
 The default path contains the version number so that installation of a new version of \pkg{basilisk} will trigger the creation of new virtual environments.
@@ -19,7 +19,7 @@ This ensures that any changes to \pkg{basilisk} functions will be respected by a
 
 If the \code{BASILISK_EXTERNAL_DIR} environment variable is set to some absolute path, this will be used instead as the installation directory.
 Setting this variable is occasionally necessary if the default path returned by \code{\link{R_user_dir}} has spaces;
-or on Windows, if the 260 character limit is exceeded after combining the default path with deeply nested conda paths. 
+or on Windows, if the 260 character limit is exceeded after combining the default path with deeply nested environment paths. 
 
 We assume that the user has read-write access to the external directory.
 Write access is necessary to generate new environments and to handle locking in \code{\link{lockExternalDir}}.
