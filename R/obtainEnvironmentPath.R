@@ -64,8 +64,6 @@ obtainEnvironmentPath <- function(env) {
         if (!file.exists(envpath)) {
             setupBasiliskEnv(envpath, 
                 packages=.getPackages(env), 
-                channels=.getChannels(env),
-                pip=.getPipPackages(env),
                 paths=file.path(getSystemDir(pkgname, installed=TRUE), .getPipPaths(env))) # package must already be installed to get to this point.
         }
 

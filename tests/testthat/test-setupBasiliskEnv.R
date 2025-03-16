@@ -1,4 +1,4 @@
-# library(testthat); library(basilisk); source("setup.R"); source("test-install.R"); 
+# library(testthat); library(basilisk); source("setup.R"); source("test-setupBasiliskEnv.R"); 
 
 target <- file.path(client.dir, "thingo")
 
@@ -33,8 +33,8 @@ test_that("setupBasiliskEnv will install Python 2.7 if requested", {
     skip_on_os(c("mac", "linux"), arch="aarch64")
 
     basilisk:::.unlink2(target)
-    setupBasiliskEnv(target, "python=2.7")
-    env.py <- basilisk.utils::getPythonBinary(target)
+    setupBasiliskEnv(target, "python=2.7.18")
+    env.py <- basilisk::getPythonBinary(target)
     py.ver <- system2(env.py, "--version", stderr=TRUE, stdout=TRUE)
     expect_match(py.ver, "2\\.7")
 
@@ -60,6 +60,6 @@ test_that("setupBasiliskEnv works with local packages", {
 
 test_that("setupBasiliskEnv destroys directory on error", {
     basilisk:::.unlink2(target)
-    expect_error(setupBasiliskEnv(target, package="WHHEEEEEEEEEEEEEEEEEE==0.0.1"), 'failed to install')
+    expect_error(setupBasiliskEnv(target, package="WHHEEEEEEEEEEEEEEEEEE==0.0.1"))
     expect_false(file.exists(target))
 })
