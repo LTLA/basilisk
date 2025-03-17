@@ -62,6 +62,9 @@ If no Python version is listed, the \code{defaultPythonVersion} is used.
 However, it is prudent to explicitly list the desired version of Python in \code{packages}, even if this is already version-compatible with the current default.
 This protects against changes to the Python version in future \pkg{basilisk} versions.
 Of course, it is possible to specify an entirely different version of Python in \code{packages} by supplying, e.g., \code{"python=3.10"}.
+
+Users can specify the use of a custom Python by defining the \code{BASILISK_CUSTOM_PYTHON_X_Y} environment variable.
+This should be set to a path to a Python binary that will be used in all \code{setupBasiliskEnv} calls requesting Python version \code{X.Y}.
 }
 \examples{
 if (.Platform$OS.type != "windows") {

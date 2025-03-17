@@ -26,9 +26,10 @@ As a result, we cannot easily guarantee that some Python code executed via `r CR
 It is also possible that two R packages depend on incompatible versions of Python modules, such that it is impossible to use both packages at the same time.
 These versioning issues represent a major obstacle to reliable execution of Python code across a variety of systems via R/Bioconductor packages.
 
-`r Biocpkg("basilisk")` provisions Python virtual environments that are managed by the Bioconductor installation machinery.
-This provides developers of downstream Bioconductor packages (i.e., `r Biocpkg("basilisk")` "clients") with more control over how their Python is executed, most typically by creating custom environments containing all of their required Python packages.
-Additionally, `r Biocpkg("basilisk")` provides utilities to manage different Python environments within a single R session, allowing multiple Bioconductor packages to use incompatible versions of Python packages in the course of a single analysis.
+`r Biocpkg("basilisk")` provisions custom Python virtual environments that are managed by the Bioconductor installation machinery.
+This provides developers of downstream Bioconductor packages (i.e., `r Biocpkg("basilisk")` "clients") with more control over how their Python code is executed.
+Additionally, `r Biocpkg("basilisk")` provides utilities to manage different Python environments within a single R session,
+allowing multiple Bioconductor packages to use incompatible versions of Python packages in the course of a single analysis.
 These features enable reproducible analysis, simplify debugging of code and improve interoperability between compliant packages.
 
 # For package developers
@@ -45,7 +46,7 @@ We will assume that readers are familiar with general R package development prac
 
 `Imports: basilisk` should be set along with appropriate directives in the `NAMESPACE` for all `r Biocpkg("basilisk")` functions that are used.
 
-## Specifying environments
+## Specifying Python environments
 
 ### Defining `BasiliskEnvironment` objects
 
@@ -94,14 +95,13 @@ ${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "basilisk::configureBasiliskEnv()"
 ```
 
 Note that `basilisk.R` should be executable as a standalone file and create all `BasiliskEnvironment`s as named variables in the current R environment.
-This is because the file will be directly `source`d by `configureBasiliskEnv()` for system installation of the Python environments.
+This is because the file will be directly `source`d by `configureBasiliskEnv()` for system installation of the Python environments (see `BASILISK_USE_SYSTEM_DIR` below).
 As such, the file should not assume that the rest of the client package has been installed or that the client's various dependencies have been loaded.
 
 ## Using the environments
 
 ### Basics
 
-Any R functions that use Python code should do so via `basiliskRun()`, which ensures that different Bioconductor packages play nice when their dependencies clash.
 To use methods from the `my_env` environment that we previously defined, the functions in our hypothetical _ClientPackage_ package should define functions like:
 
 ```r
@@ -125,10 +125,11 @@ my_example_function <- function(ARG_VALUE_1, ARG_VALUE_2) {
 In the above chunk, a developer-defined function `fun` is passed to `basiliskRun()` for execution inside the `proc` context where the specified Python environment is loaded.
 Developers should not make any assumptions about the nature of `proc`, which is dependent on the state of the R session.
 For example, `r Biocpkg("basilisk")` may choose to run `fun` in the current R session, or in another forked/socket process with the same R installation.
+Any R functions that use Python code should do so via `basiliskRun()`, which ensures that different Bioconductor packages play nice when their dependencies clash.
 
 `basiliskStart()` will lazily install the requested version of Python and packages in `my_env` if they are not already present.
-This can result in some delays when any function using `r Biocpkg("basilisk")` is first called;
-afterwards, the cached environments will simply be re-used.
+This can result in some delays when `my_example_function()` is first called; afterwards, the cached environments will simply be re-used.
+Check out the `use_python()` and `virtualenv_install()` functions from `r CRANpkg("reticulate")` for more details.
 
 ### Function constraints
 
@@ -225,6 +226,10 @@ This is usually unnecessary unless the default path contains spaces or the combi
 Setting `BASILISK_USE_SYSTEM_DIR` to `1` will instruct `r Biocpkg("basilisk")` to install a client package's environments in the R system directory during R package installation.
 This is useful for enterprise-level deployments as the environments are (i) not duplicated in each user's home directory and (ii) always available to any user with access to the R installation. 
 However, it requires installation from source and thus is not set by default.
+
+Setting the `BASILISK_CUSTOM_PYTHON_X_Y` environment variable will cause all requests for Python version `X.Y` to use the Python binary at the specified path.
+This allows users to force `r Biocpkg("basilisk")` to use their own Python installation instead of installing one via `r Biocpkg("reticulate")`.
+Note that different client packages may need different Python versions so multiple environment variables may need to be set for different `X` and `Y`. 
 
 Setting `BASILISK_NO_DESTROY` to `1` will instruct `r Biocpkg("basilisk")` to _not_ destroy previous environments upon installation of a new version of `r Biocpkg("basilisk")`.
 This destruction is done by default to avoid accumulating many large obsolete environments.

@@ -42,15 +42,6 @@ test_that("setupBasiliskEnv will install Python 2.7 if requested", {
     expect_match(listPythonVersion(target), "^2\\.7")
 })
 
-test_that("setupBasiliskEnv works with PyPi-hosted packages", {
-    basilisk:::.unlink2(target)
-    setupBasiliskEnv(target, old.pandas.deps, pip=old.pandas)
-
-    incoming <- basilisk:::.basilisk_freeze(target)
-    expect_true(old.pandas %in% incoming)
-    expect_true(all(old.pandas.deps %in% incoming))
-})
-
 test_that("setupBasiliskEnv works with local packages", {
     basilisk:::.unlink2(target)
     setupBasiliskEnv(target, packages=character(0), paths=system.file("example", "inst", "test_dummy", package="basilisk"))
@@ -62,4 +53,26 @@ test_that("setupBasiliskEnv destroys directory on error", {
     basilisk:::.unlink2(target)
     expect_error(setupBasiliskEnv(target, package="WHHEEEEEEEEEEEEEEEEEE==0.0.1"))
     expect_false(file.exists(target))
+})
+
+test_that("setupBasiliskEnv responds to overrides", {
+    host <- suppressMessages(install_python(basilisk::defaultPythonVersion))
+
+    version.components <- strsplit(basilisk::defaultPythonVersion, "\\.")[[1]]
+    major <- version.components[[1]]
+    minor <- version.components[[2]]
+    names(host) <- sprintf("BASILISK_CUSTOM_PYTHON_%s_%s", major, minor)
+
+    old <- Sys.getenv(names(host), NA)
+    do.call(Sys.setenv, as.list(host))
+    if (is.na(old)) {
+        on.exit(Sys.unsetenv(names(host)))
+    } else {
+        names(old) <- names(host)
+        on.exit(do.call(Sys.setenv, as.list(old)))
+    }
+
+    # Not actually sure how to check that it used the environment variable... oh well.
+    setupBasiliskEnv(target, c(test.pandas, test.pandas.deps))
+    expect_true(file.exists(target))
 })

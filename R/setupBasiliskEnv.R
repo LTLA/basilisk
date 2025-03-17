@@ -50,6 +50,9 @@
 #' This protects against changes to the Python version in future \pkg{basilisk} versions.
 #' Of course, it is possible to specify an entirely different version of Python in \code{packages} by supplying, e.g., \code{"python=3.10"}.
 #'
+#' Users can specify the use of a custom Python by defining the \code{BASILISK_CUSTOM_PYTHON_X_Y} environment variable.
+#' This should be set to a path to a Python binary that will be used in all \code{setupBasiliskEnv} calls requesting Python version \code{X.Y}. 
+#'
 #' @examples
 #' if (.Platform$OS.type != "windows") {
 #'     tmploc <- file.path(tempdir(), "my_package_A")
@@ -83,7 +86,22 @@ setupBasiliskEnv <- function(envpath, packages, channels=NULL, pip=NULL, paths=N
     } else {
         version <- defaultPythonVersion
     }
-    py.cmd <- suppressMessages(install_python(version))
+
+    py.cmd <- NULL
+    version.components <- strsplit(version, "\\.")[[1]]
+    if (length(version.components) >= 2) {
+        major <- version.components[[1]]
+        minor <- version.components[[2]]
+        external <- sprintf("BASILISK_CUSTOM_PYTHON_%s_%s", major, minor)
+        potential <- Sys.getenv(external, NA)
+        if (!is.null(potential)) {
+            py.cmd <- potential
+        }
+    }
+
+    if (is.null(py.cmd)) {
+        py.cmd <- suppressMessages(install_python(version))
+    }
 
     # Forcing it to be interpreted as a path, not a name.
     if (!grepl("[/\\]", envpath)) {
