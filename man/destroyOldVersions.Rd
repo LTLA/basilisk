@@ -17,9 +17,7 @@ The default value is \code{TRUE}, in order to save some disk space.
 This can be changed by setting \code{BASILISK_NO_DESTROY} environment variable to \code{"1"}.
 }
 \seealso{
-\code{\link{installConda}}, where this function is used.
-
-\code{\link{clearObsoleteDir}}, which may be triggered by this function.
+\code{\link{obtainEnvironmentPath}}, which removes old environments as a side-effect.
 }
 \author{
 Aaron Lun

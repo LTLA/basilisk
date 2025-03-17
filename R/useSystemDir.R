@@ -1,6 +1,6 @@
 #' Use the R system directory?
 #'
-#' Should we use the R system directory for installing \pkg{basilisk}'s Conda instance (or client environments)?
+#' Should we use the R system directory for installing Python environments in \pkg{basilisk} clients?
 #'
 #' @details
 #' The default value is \code{FALSE} to avoid problems with position-dependent code in packaged binaries.
@@ -11,7 +11,7 @@
 #' @author Aaron Lun
 #'
 #' @seealso
-#' \code{\link{installConda}} and \code{\link{getCondaDir}}, where this function is used.
+#' \code{link{configureBasiliskEnv}}, which is run during package installation. 
 #'
 #' @export
 useSystemDir <- function() {

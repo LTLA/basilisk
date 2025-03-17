@@ -11,9 +11,7 @@
 #' @author Aaron Lun
 #'
 #' @seealso 
-#' \code{\link{installConda}}, where this function is used.
-#'
-#' \code{\link{clearObsoleteDir}}, which may be triggered by this function.
+#' \code{\link{obtainEnvironmentPath}}, which removes old environments as a side-effect.
 #' 
 #' @export
 destroyOldVersions <- function() {

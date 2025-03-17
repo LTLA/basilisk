@@ -77,9 +77,6 @@ Similarly, it would be unwise to interact with \code{proc} via any function othe
 If \code{proc=NULL} in \code{basiliskRun}, a process will be created and closed automatically.
 This may be convenient in functions where persistence is not required.
 Note that doing so requires specification of \code{pkgname} and \code{envname}.
-
-If the base Conda installation provided with \pkg{basilisk} satisfies the requirements of the client package, 
-developers can set \code{env=NULL} in this function to use that base installation rather than constructing a separate environment.
 }
 \section{Choice of process type}{
 
@@ -136,15 +133,12 @@ See Examples for a working demonstration.
 \section{Use of lazy installation}{
 
 If the specified \pkg{basilisk} environment is not present and \code{env} is a \linkS4class{BasiliskEnvironment} object, the environment will be created upon first use of \code{basiliskStart}.
-If the base Conda installation is not present, it will also be installed upon first use of \code{basiliskStart}.
-We do not provide Conda with the \pkg{basilisk} package binaries to avoid portability problems with hard-coded paths (as well as potential licensing issues from redistribution).
-
-By default, the environments are created in an external user-writable directory defined by \code{\link{getExternalDir}}.
+These environments are created in an external user-writable directory defined by \code{\link{getExternalDir}}.
 The location of this directory can be changed by setting the \code{BASILISK_EXTERNAL_DIR} environment variable to the desired path.
 This may occasionally be necessary in rare cases, e.g., if the file path to the default location is too long for Windows.
 
-Advanced users may consider setting the environment variable \code{BASILISK_USE_SYSTEM_DIR} to 1 when installing \pkg{basilisk} and its client packages from source.
-This will place both the base installation and the environments in the R system directory, which simplifies permission management and avoids duplication in enterprise settings.
+Advanced users may consider setting the environment variable \code{BASILISK_USE_SYSTEM_DIR} to 1 when installing \pkg{basilisk} client packages from source.
+This will place each package's Python environments in the R system directory, which simplifies permission management and avoids duplication in enterprise settings.
 }
 
 \examples{
