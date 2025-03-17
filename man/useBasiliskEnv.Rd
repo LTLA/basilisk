@@ -14,12 +14,19 @@ useBasiliskEnv(envpath, full.activation = NA)
 \value{
 The function will attempt to load the specified \pkg{basilisk} environment into the R session,
 possibly with the modification of some environment variables (see Details).
-A \code{NULL} is invisibly returned.
+
+A function is invisibly returned that accepts no arguments and resets all environment variables to their original values prior to the \code{useBasiliskEnv} call.
 }
 \description{
 Use \pkg{basilisk} environments for isolated execution of Python code with appropriate versions of all Python packages.
 }
 \details{
+\code{useBasiliskEnv} will load the Python binary at \code{envpath} (or specifically, its shared library) into the current R session via \pkg{reticulate}.
+Users can then use, e.g., \code{\link[reticulate]{import}} to access functionality in the Python packages installed in the virtual environment.
+
+To ensure that the correct packages are used, \code{useBasiliskEnv} will unset environment variables like \code{PYTHONPATH} and \code{PYTHONHOME}.
+These can be restored by running the function returned by \code{useBasiliskEnv}.
+
 It is unlikely that developers should ever need to call \code{\link{useBasiliskEnv}} directly.
 Rather, this interaction should be automatically handled by \code{\link{basiliskStart}}.
 }

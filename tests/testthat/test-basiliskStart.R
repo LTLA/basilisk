@@ -192,3 +192,24 @@ test_that("basilisk uses sockets correctly", {
     expect_true(r(persistence_check, args=list(version=new.version, envir=tA, shared=FALSE, fork=FALSE)))
     expect_true(r(persistence_check, args=list(version=old.version, envir=tB, shared=FALSE, fork=FALSE)))
 })
+
+###########################################################
+
+test_that("basilisk unsets key environment variables correctly", {
+    expect_true(r(function(envir) {
+        library(basilisk)
+        library(testthat)
+
+        pypath <- "/usr/bin/whee"
+        Sys.setenv(PYTHONPATH=pypath)
+        expect_identical(Sys.getenv("PYTHONPATH"), pypath)
+
+        cl <- basiliskStart(envir)
+        expect_identical(Sys.getenv("PYTHONPATH", ""), "")
+        basiliskStop(cl)
+
+        expect_identical(Sys.getenv("PYTHONPATH"), pypath)
+
+        TRUE
+    }, args=list(envir=tA)))
+})

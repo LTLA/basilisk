@@ -147,19 +147,20 @@ basiliskStart <- function(env, full.activation=NA, fork=getBasiliskFork(), share
     envpath <- obtainEnvironmentPath(env)
 
     if (shared) {
+        proc <- new.env()
+
         ok <- FALSE
         if (py_available()) {
             if (.same_as_loaded(envpath)) {
                 ok <- TRUE
             }
         } else {
-            useBasiliskEnv(envpath, full.activation)
+            proc$.basilisk.restore <- useBasiliskEnv(envpath, full.activation)
             ok <- TRUE
         }
-        proc <- new.env()
 
         if (ok) {
-            return(new.env())
+            return(proc)
         }
     } 
 
@@ -170,7 +171,10 @@ basiliskStart <- function(env, full.activation=NA, fork=getBasiliskFork(), share
         proc <- makePSOCKcluster(1)
     }
 
+    # No need to store the function returned by useBasiliskEnv; once we call
+    # basiliskStop, we stop the process, so there's no point resetting the variables.
     clusterCall(proc, useBasiliskEnv, envpath=envpath, full.activation=full.activation)
+
     clusterCall(proc, .instantiate_store)
 
     proc
@@ -186,6 +190,11 @@ basiliskStart <- function(env, full.activation=NA, fork=getBasiliskFork(), share
 basiliskStop <- function(proc) {
     if (!is.environment(proc)) {
         stopCluster(proc)
+    } else {
+        restore <- proc$.basilisk.restore
+        if (!is.null(restore)) {
+            restore()
+        }
     }
 }
 
