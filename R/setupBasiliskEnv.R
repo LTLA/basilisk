@@ -80,6 +80,23 @@ setupBasiliskEnv <- function(envpath, packages, channels=NULL, pip=NULL, paths=N
         }
     }, add=TRUE, after=FALSE)
 
+    # Avoid reticulate spitting the dummy during R CMD check.
+    if (!is.na(Sys.getenv("_R_CHECK_PACKAGE_NAME_", NA))) {
+        retvar <- "_RETICULATE_I_KNOW_WHAT_IM_DOING_"
+        previous <- Sys.getenv(retvar, NA)
+        envlist <- list("true") 
+        names(envlist) <- retvar
+        do.call(Sys.setenv, envlist)
+        on.exit({
+            if (is.na(previous)) {
+                Sys.unsetenv(retvar)
+            } else {
+                envlist[[1]] <- previous
+                do.call(Sys.setenv, envlist)
+            }
+        }, add=TRUE, after=FALSE)
+    }
+
     # Determining the Python version to use (possibly from `packages=`).
     if (any(is.py <- grepl("^python=", packages))) {
         version <- sub("^python=+", "", packages[is.py][1])
@@ -94,7 +111,7 @@ setupBasiliskEnv <- function(envpath, packages, channels=NULL, pip=NULL, paths=N
         minor <- version.components[[2]]
         external <- sprintf("BASILISK_CUSTOM_PYTHON_%s_%s", major, minor)
         potential <- Sys.getenv(external, NA)
-        if (!is.null(potential)) {
+        if (!is.na(potential)) {
             py.cmd <- potential
         }
     }
