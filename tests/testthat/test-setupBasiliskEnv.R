@@ -125,7 +125,7 @@ test_that("setupBasiliskEnv responds to overrides", {
 
     old <- Sys.getenv(names(host), NA)
     do.call(Sys.setenv, as.list(host))
-    on.exit(unsetenv(names(host), old), add=TRUE, after=TRUE)
+    on.exit(resetenv(names(host), old), add=TRUE, after=TRUE)
 
     # Not actually sure how to check that it used the environment variable... oh well.
     setupBasiliskEnv(target, c(test.pandas, test.pandas.deps))
