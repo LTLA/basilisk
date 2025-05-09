@@ -50,28 +50,28 @@ To identify appropriate versions of dependencies, we suggest:
 \item Including those dependencies in the \code{packages=} argument for future use.
 (It is helpful to mark dependencies in some manner, e.g., with comments, to distinguish them from the actual desired packages.)
 }
-The only reason that pinned dependencies are not mandatory is because some dependencies are OS-specific,
-requiring some manual pruning of the output of \code{\link{listPackages}}.
 
 If versions for the desired packages are not known beforehand, developers may use \code{\link{setBasiliskCheckVersions}(FALSE)} before running \code{setupBasiliskEnv}.
 This instructs \code{setupBasiliskEnv} to create an environment with appropriate versions of all unpinned packages, 
 which can then be read out via \code{\link{listPackages}} for insertion in the \code{packages=} argument as described above.
 We stress that this option should \emph{not} be used in any release of the R package, it is a development-phase-only utility.
 
-If no Python version is listed, the \code{defaultPythonVersion} is used.
-However, it is prudent to explicitly list the desired version of Python in \code{packages}, even if this is already version-compatible with the current default.
+The virtual environment can be created with a specific Python version by specifying \code{python=} in \code{packages}, e.g., \code{"python=3.10"}.
+If no Python version is listed, the environment is created with the \code{defaultPythonVersion} version.
+It is advised to explicitly list the desired version of Python in \code{packages}, even if this is already version-compatible with the default.
 This protects against changes to the Python version in future \pkg{basilisk} versions.
-Of course, it is possible to specify an entirely different version of Python in \code{packages} by supplying, e.g., \code{"python=3.10"}.
+Each requested Python version will be installed using Pyenv with \code{\link[reticulate]{install_python}} if it is not already available.
 
-Users can specify the use of a custom Python by defining the \code{BASILISK_CUSTOM_PYTHON_*} environment variable.
+Instead of installing a new Python instance, administrators or users can use their own Python by defining the \code{BASILISK_CUSTOM_PYTHON_*} environment variable.
 This can be of the form \code{BASILISK_CUSTOM_PYTHON_X}, for Python version \code{X};
 or \code{BASILISK_CUSTOM_PYTHON_X_Y}, for Python version \code{X.Y};
 or \code{BASILISK_CUSTOM_PYTHON_X_Y_Z}, for Python version \code{X.Y.Z}.
 In each case, the environment variable should be set to a path to a Python binary.
-When a particular Python version is requested, \code{setupBasiliskEnv} will check all environment variables for custom Pythons in order of decreasing specificity.
-For example, if a user requested \code{python=3.10.8}, the function will first look for \code{BASILISK_CUSTOM_PYTHON_3_10_8};
-if not set, it will then look for \code{BASILISK_CUSTOM_PYTHON_3_10};
-and finally, \code{BASILISK_CUSTOM_PYTHON_3}.
+When a particular Python version is requested, \code{setupBasiliskEnv} will check the corresponding environment variable.
+
+Administrators can also set the \code{BASILISK_NO_PYENV} environment variable to 1 to disable installation via Pyenv altogether.
+Doing so instructs \code{setupBasiliskEnv} to throw an error if a custom Python is not available via the \code{BASILISK_CUSTOM_PYTHON_*} variables.
+This can occasionally be useful to prevent unexpected installations of new Python instances.
 }
 \examples{
 if (.Platform$OS.type != "windows") {

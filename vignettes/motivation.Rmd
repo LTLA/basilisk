@@ -72,7 +72,7 @@ If the package versions are not known, we suggest using `setBasiliskCheckVersion
 
 If a different version of Python is required, it should be explicitly listed in the `packages=`, e.g., with `python=3.7`.
 Otherwise, `r Biocpkg("basilisk")` will automatically use the default specified in `defaultPythonVersion` (currently `r defaultPythonVersion`).
-It is often a good idea to explicitly list a version of Python in `packages=`, even if it is already version-compatible with the default;
+It is a good idea to explicitly list a version of Python in `packages=`, even if it is already version-compatible with the default;
 this ensures that Python environment creation is robust to future changes to the default.
 
 ### Populating environments on installation
@@ -229,8 +229,13 @@ However, it requires installation from source and thus is not set by default.
 
 Setting the `BASILISK_CUSTOM_PYTHON_X_Y_Z` environment variable will cause all requests for Python version `X.Y.Z` to use the Python binary at the specified path.
 This allows users to force `r Biocpkg("basilisk")` to use their own Python installation instead of installing one via `r Biocpkg("reticulate")`.
-The same approach can be used with `BASILISK_CUSTOM_PYTHON_X_Y` and `BASILISK_CUSTOM_PYTHON_X` for Python versions `X.Y` or `X`, which will be used to satisfy a request for `X.Y.Z` if the more specific variable is not set.
-Note that different client packages may need different Python versions so multiple environment variables may need to be set for different `X`/`Y`/`Z` combinations.
+The same approach can be used with `BASILISK_CUSTOM_PYTHON_X_Y` and `BASILISK_CUSTOM_PYTHON_X` for Python versions `X.Y` or `X`.
+Different client packages may need different Python versions so multiple environment variables may need to be set for different `X`/`Y`/`Z` combinations.
+
+Setting the `BASILISK_NO_PYENV` environment variable will prevent `r Biocpkg("basilisk")` from installing any new Python instances via Pyenv.
+If a requested Python version has no matching `BASILISK_CUSTOM_PYTHON_*` path, `r Biocpkg("basilisk")` will throw an error instead of attempting an installation.
+This allows administrators to prevent unexpected installation of new Python instances,
+e.g., when the requested version of Python is already available but the assotiated `BASILISK_CUSTOM_PYTHON_*` variable has not been set.
 
 Setting `BASILISK_NO_DESTROY` to `1` will instruct `r Biocpkg("basilisk")` to _not_ destroy previous environments upon installation of a new version of `r Biocpkg("basilisk")`.
 This destruction is done by default to avoid accumulating many large obsolete environments.

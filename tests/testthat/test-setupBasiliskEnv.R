@@ -64,70 +64,26 @@ resetenv <- function(var, old) {
     }
 }
 
-test_that("override selection works correctly", {
-    # Unsetting everything so that the tests work correctly.
-    namex <- "BASILISK_CUSTOM_PYTHON_3"
-    oldx <- Sys.getenv(namex, NA)
-    Sys.unsetenv(namex)
-    on.exit(resetenv(namex, oldx), add=TRUE, after=TRUE)
-    namexy <- "BASILISK_CUSTOM_PYTHON_3_10"
-    oldxy <- Sys.getenv(namexy, NA)
-    Sys.unsetenv(namexy)
-    on.exit(resetenv(namexy, oldxy), add=TRUE, after=TRUE)
-    namexyz <- "BASILISK_CUSTOM_PYTHON_3_10_8"
-    oldxyz <- Sys.getenv(namexyz, NA)
-    Sys.unsetenv(namexyz)
-    on.exit(resetenv(namexyz, oldxyz), add=TRUE, after=TRUE)
-
-    expect_null(basilisk:::.check_for_custom_python("3.10.8"))
-    expect_null(basilisk:::.check_for_custom_python("3.10"))
-    expect_null(basilisk:::.check_for_custom_python("3")) 
-
-    host <- list("FOOBAR")
-    names(host) <- namexyz
-    do.call(Sys.setenv, host)
-    expect_identical(basilisk:::.check_for_custom_python("3.10.8"), "FOOBAR")
-    expect_null(basilisk:::.check_for_custom_python("3.10"))
-    expect_null(basilisk:::.check_for_custom_python("3")) 
-
-    host <- list("STUFF")
-    names(host) <- namexy
-    do.call(Sys.setenv, host)
-    expect_identical(basilisk:::.check_for_custom_python("3.10.8"), "FOOBAR")
-    expect_identical(basilisk:::.check_for_custom_python("3.10"), "STUFF")
-    expect_null(basilisk:::.check_for_custom_python("3")) 
-
-    host <- list("BLAH")
-    names(host) <- namex
-    do.call(Sys.setenv, host)
-    expect_identical(basilisk:::.check_for_custom_python("3.10.8"), "FOOBAR")
-    expect_identical(basilisk:::.check_for_custom_python("3.10"), "STUFF")
-    expect_identical(basilisk:::.check_for_custom_python("3"), "BLAH") 
-
-    Sys.unsetenv(namexyz)
-    expect_identical(basilisk:::.check_for_custom_python("3.10.8"), "STUFF")
-    expect_identical(basilisk:::.check_for_custom_python("3.10"), "STUFF")
-    expect_identical(basilisk:::.check_for_custom_python("3"), "BLAH") 
-
-    Sys.unsetenv(namexy)
-    expect_identical(basilisk:::.check_for_custom_python("3.10.8"), "BLAH")
-    expect_identical(basilisk:::.check_for_custom_python("3.10"), "BLAH")
-    expect_identical(basilisk:::.check_for_custom_python("3"), "BLAH") 
-})
-
 test_that("setupBasiliskEnv responds to overrides", {
     host <- suppressMessages(install_python(basilisk::defaultPythonVersion))
 
     version.components <- strsplit(basilisk::defaultPythonVersion, "\\.")[[1]]
-    major <- version.components[[1]]
-    minor <- version.components[[2]]
-    names(host) <- sprintf("BASILISK_CUSTOM_PYTHON_%s_%s", major, minor)
+    customvar <- paste(c("BASILISK_CUSTOM_PYTHON", version.components), collapse="_")
+    names(host) <- customvar
 
-    old <- Sys.getenv(names(host), NA)
+    old <- Sys.getenv(customvar, NA)
     do.call(Sys.setenv, as.list(host))
-    on.exit(resetenv(names(host), old), add=TRUE, after=TRUE)
+    on.exit(resetenv(customvar, old), add=TRUE, after=TRUE)
 
     # Not actually sure how to check that it used the environment variable... oh well.
+    basilisk:::.unlink2(target)
     setupBasiliskEnv(target, c(test.pandas, test.pandas.deps))
     expect_true(file.exists(target))
+
+    # But we can for sure disable it and check that we get an error.
+    Sys.unsetenv(customvar)
+    oldp <- Sys.getenv("BASILISK_NO_PYENV", NA)
+    Sys.setenv(BASILISK_NO_PYENV=1)
+    on.exit(resetenv("BASILISK_NO_PYENV", oldp), add=TRUE, after=TRUE)
+    expect_error(setupBasiliskEnv(target, c(test.pandas, test.pandas.deps)), customvar)
 })
