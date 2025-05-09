@@ -69,11 +69,12 @@ useBasiliskEnv <- function(envpath, full.activation=NA) {
 
 #' @importFrom reticulate py_config 
 .same_as_loaded <- function(envpath) {
-    # Checking whether we're the same as the existing python instance, which
-    # would indicate that we correctly loaded `envpath`. The normalization of
-    # the environment ensures that we're matching the path in useBasiliskEnv.
-    # Don't normalize the binary path itself as this is a symlink.
-    expected <- getPythonBinary(normalizePath(envpath))
+    # - Checking whether we're the same as the existing python instance, which
+    #   would indicate that we correctly loaded `envpath`. The normalization of
+    #   the environment ensures that we're matching the path in useBasiliskEnv.
+    # - Don't normalize the binary path itself as this is a symlink.
+    # - Set winslash= to match py_config()'s use of forward slashes. 
+    expected <- getPythonBinary(normalizePath(envpath, winslash="/"))
     actual <- py_config()$python
     identical(expected, actual)
 }
