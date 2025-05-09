@@ -227,9 +227,10 @@ Setting `BASILISK_USE_SYSTEM_DIR` to `1` will instruct `r Biocpkg("basilisk")` t
 This is useful for enterprise-level deployments as the environments are (i) not duplicated in each user's home directory and (ii) always available to any user with access to the R installation. 
 However, it requires installation from source and thus is not set by default.
 
-Setting the `BASILISK_CUSTOM_PYTHON_X_Y` environment variable will cause all requests for Python version `X.Y` to use the Python binary at the specified path.
+Setting the `BASILISK_CUSTOM_PYTHON_X_Y_Z` environment variable will cause all requests for Python version `X.Y.Z` to use the Python binary at the specified path.
 This allows users to force `r Biocpkg("basilisk")` to use their own Python installation instead of installing one via `r Biocpkg("reticulate")`.
-Note that different client packages may need different Python versions so multiple environment variables may need to be set for different `X` and `Y`. 
+The same approach can be used with `BASILISK_CUSTOM_PYTHON_X_Y` and `BASILISK_CUSTOM_PYTHON_X` for Python versions `X.Y` or `X`, which will be used to satisfy a request for `X.Y.Z` if the more specific variable is not set.
+Note that different client packages may need different Python versions so multiple environment variables may need to be set for different `X`/`Y`/`Z` combinations.
 
 Setting `BASILISK_NO_DESTROY` to `1` will instruct `r Biocpkg("basilisk")` to _not_ destroy previous environments upon installation of a new version of `r Biocpkg("basilisk")`.
 This destruction is done by default to avoid accumulating many large obsolete environments.

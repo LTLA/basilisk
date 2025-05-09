@@ -50,8 +50,15 @@
 #' This protects against changes to the Python version in future \pkg{basilisk} versions.
 #' Of course, it is possible to specify an entirely different version of Python in \code{packages} by supplying, e.g., \code{"python=3.10"}.
 #'
-#' Users can specify the use of a custom Python by defining the \code{BASILISK_CUSTOM_PYTHON_X_Y} environment variable.
-#' This should be set to a path to a Python binary that will be used in all \code{setupBasiliskEnv} calls requesting Python version \code{X.Y}. 
+#' Users can specify the use of a custom Python by defining the \code{BASILISK_CUSTOM_PYTHON_*} environment variable.
+#' This can be of the form \code{BASILISK_CUSTOM_PYTHON_X}, for Python version \code{X};
+#' or \code{BASILISK_CUSTOM_PYTHON_X_Y}, for Python version \code{X.Y};
+#' or \code{BASILISK_CUSTOM_PYTHON_X_Y_Z}, for Python version \code{X.Y.Z}.
+#' In each case, the environment variable should be set to a path to a Python binary.
+#' When a particular Python version is requested, \code{setupBasiliskEnv} will check all environment variables for custom Pythons in order of decreasing specificity.
+#' For example, if a user requested \code{python=3.10.8}, the function will first look for \code{BASILISK_CUSTOM_PYTHON_3_10_8};
+#' if not set, it will then look for \code{BASILISK_CUSTOM_PYTHON_3_10};
+#' and finally, \code{BASILISK_CUSTOM_PYTHON_3}.
 #'
 #' @examples
 #' if (.Platform$OS.type != "windows") {
@@ -104,18 +111,7 @@ setupBasiliskEnv <- function(envpath, packages, channels=NULL, pip=NULL, paths=N
         version <- defaultPythonVersion
     }
 
-    py.cmd <- NULL
-    version.components <- strsplit(version, "\\.")[[1]]
-    if (length(version.components) >= 2) {
-        major <- version.components[[1]]
-        minor <- version.components[[2]]
-        external <- sprintf("BASILISK_CUSTOM_PYTHON_%s_%s", major, minor)
-        potential <- Sys.getenv(external, NA)
-        if (!is.na(potential)) {
-            py.cmd <- potential
-        }
-    }
-
+    py.cmd <- .check_for_custom_python(version)
     if (is.null(py.cmd)) {
         py.cmd <- suppressMessages(install_python(version))
     }
@@ -157,6 +153,24 @@ setupBasiliskEnv <- function(envpath, packages, channels=NULL, pip=NULL, paths=N
                 paste(sprintf("'%s'", packages[failed]), collapse=", ")))
         }
     }
+}
+
+#' @importFrom utils head
+.check_for_custom_python <- function(version) {
+    version.components <- strsplit(version, "\\.")[[1]]
+
+    ncomp <- length(version.components)
+    for (i in seq_len(ncomp)) {
+        # Go from most specific to least specific.
+        current.components <- head(version.components, ncomp - i + 1L)
+        external <- sprintf("BASILISK_CUSTOM_PYTHON_%s", paste(current.components, collapse="_"))
+        potential <- Sys.getenv(external, NA)
+        if (!is.na(potential)) {
+            return(potential)
+        }
+    }
+
+    NULL
 }
 
 .unlink2 <- function(x, recursive=TRUE, force=TRUE, ...) {
