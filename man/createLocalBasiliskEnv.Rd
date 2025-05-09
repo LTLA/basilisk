@@ -2,7 +2,7 @@
 % Please edit documentation in R/createLocalBasiliskEnv.R
 \name{createLocalBasiliskEnv}
 \alias{createLocalBasiliskEnv}
-\title{Create a local conda environment manually}
+\title{Manually create a local virtual environment manually}
 \usage{
 createLocalBasiliskEnv(dir, ...)
 }
@@ -16,7 +16,7 @@ String containing a path to the newly created environment, or to an existing env
 This can be used in \code{\link{basiliskRun}}.
 }
 \description{
-Manually create a local conda environment with versioning and thread safety.
+Manually create a local virtual environment with versioning and thread safety.
 This is intended for use in analysis workflows rather than package development.
 }
 \details{

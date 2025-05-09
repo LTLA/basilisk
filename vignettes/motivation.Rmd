@@ -3,7 +3,7 @@ title: Freezing Python versions inside Bioconductor packages
 author: 
 - name: Aaron Lun
   email: infinite.monkeys.with.keyboards@gmail.com
-date: "Revised: September 10, 2022"
+date: "Revised: March 16, 2025"
 output:
   BiocStyle::html_document
 package: basilisk
@@ -26,9 +26,10 @@ As a result, we cannot easily guarantee that some Python code executed via `r CR
 It is also possible that two R packages depend on incompatible versions of Python modules, such that it is impossible to use both packages at the same time.
 These versioning issues represent a major obstacle to reliable execution of Python code across a variety of systems via R/Bioconductor packages.
 
-`r Biocpkg("basilisk")` uses Conda (or more specifically, [Miniforge](https://github.com/conda-forge/miniforge)) to provision a Python instance that is fully managed by the Bioconductor installation machinery.
-This provides developers of downstream Bioconductor packages with more control over their Python environment, most typically by the creation of package-specific `conda` environments containing all of their required Python packages.
-Additionally, `r Biocpkg("basilisk")` provides utilities to manage different Python environments within a single R session, enabling multiple Bioconductor packages to use incompatible versions of Python packages in the course of a single analysis.
+`r Biocpkg("basilisk")` provisions custom Python virtual environments that are managed by the Bioconductor installation machinery.
+This provides developers of downstream Bioconductor packages (i.e., `r Biocpkg("basilisk")` "clients") with more control over how their Python code is executed.
+Additionally, `r Biocpkg("basilisk")` provides utilities to manage different Python environments within a single R session,
+allowing multiple Bioconductor packages to use incompatible versions of Python packages in the course of a single analysis.
 These features enable reproducible analysis, simplify debugging of code and improve interoperability between compliant packages.
 
 # For package developers
@@ -45,15 +46,12 @@ We will assume that readers are familiar with general R package development prac
 
 `Imports: basilisk` should be set along with appropriate directives in the `NAMESPACE` for all `r Biocpkg("basilisk")` functions that are used.
 
-`.BBSoptions` should contain `UnsupportedPlatforms: win32`, as builds on Windows 32-bit are not supported.
-
-## Specifying environments
+## Specifying Python environments
 
 ### Defining `BasiliskEnvironment` objects
 
-Typically, we need to create some environments with the requisite packages using the `conda` package manager.
 A `basilisk.R` file should be present in the `R/` subdirectory containing commands to produce a `BasiliskEnvironment` object.
-These objects define the Python environments to be constructed by `r Biocpkg("basilisk")` on behalf of your client package.
+These objects define the Python virtual environments to be constructed by `r Biocpkg("basilisk")` on behalf of your client package.
 
 ```{r}
 library(basilisk)
@@ -68,26 +66,19 @@ second_env <- BasiliskEnvironment(envname="second_env_name",
 )
 ```
 
-As shown above, all listed Python packages should have valid version numbers that can be obtained by `conda`.
+As shown above, all listed Python packages should have valid version numbers that can be obtained by `pip`.
 It is strongly recommended to explicitly list the versions of any dependencies so as to future-proof the installation process.
 If the package versions are not known, we suggest using `setBasiliskCheckVersions(FALSE)` and `listPackages()` to identify the appropriate versions.
 
 If a different version of Python is required, it should be explicitly listed in the `packages=`, e.g., with `python=3.7`.
-Otherwise, `r Biocpkg("basilisk")` will automatically use the `conda`-provided version of Python (here, `r listPythonVersion()`) in all environments.
-It is often a good idea to explicitly list a version of Python in `packages=`, even if it is already version-compatible with the default;
-this ensures that the environment creation is robust to adminstrator overrides of the conda instance (see [below](#fine-tuning-basilisks-behavior)).
-
-By default, `r Biocpkg("basilisk")` will fetch Conda packages from the `conda-forge` channel (see `setupBasiliskEnv()` for details).
-This can be modified through the `channels=` argument in the `BasiliskEnvironment()` constructor, though some care is required with respect to licensing.
-In particular, the default Anaconda channel (i.e.,`defaults`) is not free for commercial usage, which restricts the usability of any Bioconductor packages that use Conda packages from this channel.
-
-It is also possible to install packages from PyPi via the `pip=` argument,
-but this should be done with [much caution](https://www.anaconda.com/blog/using-pip-in-a-conda-environment).
+Otherwise, `r Biocpkg("basilisk")` will automatically use the default specified in `defaultPythonVersion` (currently `r defaultPythonVersion`).
+It is a good idea to explicitly list a version of Python in `packages=`, even if it is already version-compatible with the default;
+this ensures that Python environment creation is robust to future changes to the default.
 
 ### Populating environments on installation
 
 An executable `configure` file should be created in the top level of the client package, containing the command shown below.
-This enables creation of environments during `r Biocpkg("basilisk")` installation if `BASILISK_USE_SYSTEM_DIR` is set.
+This enables creation of Python environments during package installation if `BASILISK_USE_SYSTEM_DIR` is set.
 
 ```sh
 #!/bin/sh
@@ -103,15 +94,14 @@ For completeness, `configure.win` should also be created:
 ${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "basilisk::configureBasiliskEnv()"
 ```
 
-Note that `basilisk.R` should be executable as a standalone file and create all `BasiliskEnvironment`s as named variables in the current environment.
-This is because the file will be directly `source`d by `configureBasiliskEnv()` for system installation of the environments.
+Note that `basilisk.R` should be executable as a standalone file and create all `BasiliskEnvironment`s as named variables in the current R environment.
+This is because the file will be directly `source`d by `configureBasiliskEnv()` for system installation of the Python environments (see `BASILISK_USE_SYSTEM_DIR` below).
 As such, the file should not assume that the rest of the client package has been installed or that the client's various dependencies have been loaded.
 
 ## Using the environments
 
 ### Basics
 
-Any R functions that use Python code should do so via `basiliskRun()`, which ensures that different Bioconductor packages play nice when their dependencies clash.
 To use methods from the `my_env` environment that we previously defined, the functions in our hypothetical _ClientPackage_ package should define functions like:
 
 ```r
@@ -132,13 +122,14 @@ my_example_function <- function(ARG_VALUE_1, ARG_VALUE_2) {
 }
 ```
 
-In the above chunk, a developer-defined function `fun` is passed to `basiliskRun()` for execution inside the `proc` context where the specified conda environment is loaded.
+In the above chunk, a developer-defined function `fun` is passed to `basiliskRun()` for execution inside the `proc` context where the specified Python environment is loaded.
 Developers should not make any assumptions about the nature of `proc`, which is dependent on the state of the R session.
-For example, `r Biocpkg("basilisk")` may choose to run `fun` in the current R session, or in another process with the same R installation, or even in another process with a different R installation.
+For example, `r Biocpkg("basilisk")` may choose to run `fun` in the current R session, or in another forked/socket process with the same R installation.
+Any R functions that use Python code should do so via `basiliskRun()`, which ensures that different Bioconductor packages play nice when their dependencies clash.
 
-`basiliskStart()` will lazily install conda and the Python packages in `my_env` if they are not already present.
-This can result in some delays when any function using `r Biocpkg("basilisk")` is first called;
-afterwards, the installed environments will simply be re-used.
+`basiliskStart()` will lazily install the requested version of Python and packages in `my_env` if they are not already present.
+This can result in some delays when `my_example_function()` is first called; afterwards, the cached environments will simply be re-used.
+Check out the `use_python()` and `virtualenv_install()` functions from `r CRANpkg("reticulate")` for more details.
 
 ### Function constraints
 
@@ -149,13 +140,12 @@ Developers should NOT return `r CRANpkg("reticulate")` bindings to Python object
 This is because `basiliskRun()` may execute in a different process such that any pointers are no longer valid when they are transferred back to the parent process.
 Both the arguments to the function passed to `basiliskRun()` and its return value MUST be amenable to serialization.
 - ⚠️  **Variables should be explicitly passed as arguments to the function.**
-Developers should not rely on closures capturing the environment in which the function was defined.
-If the function is executed in a different process, any references to objects in its previous environment will no longer be valid.
+Developers should not rely on closures capturing the R environment in which the function was defined.
+If the function is executed in a different process, any references to objects in its previous R environment will no longer be valid.
 Rather, the necessary objects should be explicitly passed as arguments to the function.
 - ⚠️  **Non-base functions should be explicitly imported via their namespace.**
 When using functions (or variables) exported from non-base packages, they should be referenced using the `::` operator.
 This ensures that the relevant package will be loaded during function execution in a separate process.
-Note that certain "problematic" Python packages may preclude the use of all non-base functions altogether, see comments on the "last-resort fallback" in `?basiliskStart`.
 
 More details on acceptable function definitions are provided in `?basiliskRun`.
 Developers can check that their function behaves correctly in a different process 
@@ -164,7 +154,7 @@ by setting `setBasiliskShared(FALSE)` and `setBasiliskFork(FALSE)` prior to runn
 ### Persisting variables across calls
 
 Developers can persist variables across multiple calls to `basiliskRun()` by setting `persist=TRUE`.
-This instructs `basiliskRun()` to pass along an environment to `fun` as the `store=` argument,
+This instructs `basiliskRun()` to pass along an R environment to `fun` as the `store=` argument,
 which can be used inside `fun` to set or get variables if `basiliskRun()` is called with the same `proc`. 
 Stored variables are not subject to the restrictions on the arguments/return value of `fun`, but they are strictly internal to any instance of `proc`. 
 
@@ -196,15 +186,9 @@ Properly configured `r Biocpkg("basilisk")` clients should handle all aspects of
 That said, some system configurations are less cooperative than others:
 this section contains a list of known issues and possible fixes.
 
-Historically, the Miniforge installers did not work if the installation directory contained spaces.
-Recent Conda versions have improved support for spaces but mileage may vary in the packages. 
-If spaces are causing problems in the default installation path (check `basilisk.utils::getExternalDir()`), 
-consider setting the [`BASILISK_EXTERNAL_DIR`](#fine-tuning-basilisks-behavior) environment variable to a location without spaces.
-
 Windows has a limit of 260 characters for its file paths.
-This is occasionally exceeded due to deeply nested directories for some packages, causing the conda installation to be incomplete or fail outright.
-Furthermore, the Windows Miniforge installer has a limit of 46 characters for the top-level Conda installation directory.
-If either of these constraints are causing problems, it may be possible to circumvent them by setting `BASILISK_EXTERNAL_DIR` to a shorter path. 
+This is occasionally exceeded due to deeply nested directories for some packages, causing installation to silently fail.
+If this constraint is causing problems, it may be possible to circumvent them by setting `BASILISK_EXTERNAL_DIR` to a shorter path. 
 
 Builds for 32-bit Windows are not supported due to a lack of demand relative to the difficulty of setting it up.
 
@@ -215,24 +199,20 @@ As a workaround in such cases, users should set:
 parallel:::setDefaultClusterOptions(setup_strategy = "sequential")
 ```
 
-Conda installations and environments tend to use a lot of disk space,
-so `r Biocpkg("basilisk")` will automatically attempt to remove its old conda installations as well as unused environments for each client package.
+`r Biocpkg("basilisk")` will automatically attempt to remove old Python environments for each client package.
 However, this removal may not be fast enough on systems with low disk usage quotas, resulting in incomplete or failed installations.
 In such cases, users can forcibly clear the external directory themselves to free up some space:
 
 ```r
 # Remove obsolete environments for specific package:
-basilisk.utils::clearExternalDir(package = "pkg_name", obsolete.only = TRUE)
+basilisk::clearExternalDir(package = "pkg_name", obsolete.only = TRUE)
 
 # Remove all environments for a specific package:
-basilisk.utils::clearExternalDir(package = "pkg_name")
+basilisk::clearExternalDir(package = "pkg_name")
 
-# Remove all basilisk-managed conda installations and environments:
+# Remove all basilisk-managed environments:
 basilisk.utils::clearExternalDir()
 ```
-
-**IMPORTANT!** the automatic installation brokered by `r Biocpkg("basilisk")` assumes that the user accepts the [Anaconda terms of service](https://www.anaconda.com/terms-of-service).
-This mostly boils down to "don't hammer the Anaconda repository with requests", see the commentary [here](https://www.anaconda.com/blog/sustaining-our-stewardship-of-the-open-source-data-science-community).
 
 ## Fine-tuning _basilisk_'s behavior
 
@@ -240,55 +220,46 @@ Administrators of an R installation can modify the behavior of `r Biocpkg("basil
 All environment variables described here must be set at both installation time and run time to have any effect.
 If any value is changed, it is generally safest to reinstall `r Biocpkg("basilisk")` and all of its clients.
 
-Setting the `BASILISK_EXTERNAL_DIR` environment variable will change where the conda instance and environments are placed by [`basiliskStart()`](#basics) during lazy installation.
-This is usually unnecessary unless the default path contains spaces or the combination of the default location and conda's directory structure exceeds the file path length limit on Windows.
+Setting the `BASILISK_EXTERNAL_DIR` environment variable will change where the environments are created by [`basiliskStart()`](#basics) during lazy installation.
+This is usually unnecessary unless the default path contains spaces or the combination of the default location and environment's directory structure exceeds the file path length limit on Windows.
 
-Setting `BASILISK_USE_SYSTEM_DIR` to `1` will instruct `r Biocpkg("basilisk")` to install the conda instance in the R system directory during R package installation.
-Similarly, all (correctly `configure`d) client packages will install their environments in the corresponding system directory when they themselves are being installed.
-This is very useful for enterprise-level deployments as the conda instances and environments are (i) not duplicated in each user's home directory, and (ii) always available to any user with access to the R installation. 
+Setting `BASILISK_USE_SYSTEM_DIR` to `1` will instruct `r Biocpkg("basilisk")` to install a client package's environments in the R system directory during R package installation.
+This is useful for enterprise-level deployments as the environments are (i) not duplicated in each user's home directory and (ii) always available to any user with access to the R installation. 
 However, it requires installation from source and thus is not set by default.
 
-It is possible to direct `r Biocpkg("basilisk")` to use an existing Conda installation,
-by setting the `BASILISK_EXTERNAL_CONDA` environment variable to an absolute path to the conda installation directory.
-This may be desirable to avoid redundant copies of the same conda installation.
-Any replacement conda instance should be using a similar version of Python as `r Biocpkg("basilisk")`'s default (`r listPythonVersion()`) to satisfy client packages that rely on the implict pinning.
+Setting the `BASILISK_CUSTOM_PYTHON_X_Y_Z` environment variable will cause all requests for Python version `X.Y.Z` to use the Python binary at the specified path.
+This allows users to force `r Biocpkg("basilisk")` to use their own Python installation instead of installing one via `r Biocpkg("reticulate")`.
+The same approach can be used with `BASILISK_CUSTOM_PYTHON_X_Y` and `BASILISK_CUSTOM_PYTHON_X` for Python versions `X.Y` or `X`.
+Different client packages may need different Python versions so multiple environment variables may need to be set for different `X`/`Y`/`Z` combinations.
 
-Setting `BASILISK_MINIFORGE_VERSION` will change the Miniforge version installed by `r Biocpkg("basilisk")`.
-This should be set to the name of the tagged releases on the [Miniforce installation page](https://github.com/conda-forge/miniforge/releases), .e.g, `"24.3.0-0"`.
+Setting the `BASILISK_NO_PYENV` environment variable will prevent `r Biocpkg("basilisk")` from installing any new Python instances via Pyenv.
+If a requested Python version has no matching `BASILISK_CUSTOM_PYTHON_*` path, `r Biocpkg("basilisk")` will throw an error instead of attempting an installation.
+This allows administrators to prevent unexpected installation of new Python instances,
+e.g., when the requested version of Python is already available but the assotiated `BASILISK_CUSTOM_PYTHON_*` variable has not been set.
 
-Setting `BASILISK_NO_DESTROY` to `1` will instruct `r Biocpkg("basilisk")` to _not_ destroy previous conda instances and environments upon installation of a new version of `r Biocpkg("basilisk")`.
-This destruction is done by default to avoid accumulating many large obsolete conda instances.
+Setting `BASILISK_NO_DESTROY` to `1` will instruct `r Biocpkg("basilisk")` to _not_ destroy previous environments upon installation of a new version of `r Biocpkg("basilisk")`.
+This destruction is done by default to avoid accumulating many large obsolete environments.
 However, it is not desirable if there are multiple R instances running different versions of `r Biocpkg("basilisk")` from the same Bioconductor release, as installation by one R instance would delete the installed content for the other.
 (Multiple R instances running different Bioconductor releases are not affected.)
 This option has no effect if `BASILISK_USE_SYSTEM_DIR` is set.
 
-Setting `BASILISK_NO_FALLBACK_R` to `1` will instruct `r Biocpkg("basilisk")` to _not_ create an conda-based R installation as a last-resort fallback (see comments in `?basiliskStart`).
-This avoids the overhead of an internal R installation if it is known that shared library version conflicts will not occur.
-It is most useful for streamlining applications where developers can (i) test that no conflicts occur in the installed subset of `r Biocpkg("basilisk")` clients and/or (ii) control the versions of system libraries used by R.
-This option only has an effect if `BASILISK_USE_SYSTEM_DIR` is set, as otherwise the fallback R installation is only created upon encountering version conflicts.
-
-If `BASILISK_EXTERNAL_CONDA` is set to a read-only conda installation or if both `BASILISK_EXTERNAL_CONDA` and `BASILISK_USE_SYSTEM_DIR` are set, the fallback R environment will not be automatically created.
-In such cases, the `BASILISK_EXTERNAL_FALLBACK_R` environment variable can be set to the absolute path to an existing conda environment containing the fallback environment.
-This ensures correct operation for any `r Biocpkg("basilisk")` clients requiring the fallback. 
-
 ## Using _basilisk_ directly for analyses
 
 While `r Biocpkg("basilisk")` is primarily intended for package developers, end users can also take advantage of its graceful handling of multiple Python environments in complex workflows.
-For example, we can easily instantiate a conda environment in our working directory with `createLocalBasiliskEnv()`:
+For example, we can easily instantiate a Python environment in our working directory with `createLocalBasiliskEnv()`:
 
-```{r}
-if (.Platform$OS.type != "windows") {
-tmp <- createLocalBasiliskEnv("basilisk-vignette-test",
-    packages=c("scikit-learn=1.6.1", "numpy=2.2.2"))
-}
+```{r, eval=(.Platform$OS.type != "windows")}
+tmp <- createLocalBasiliskEnv(
+    "basilisk-vignette-test",
+    packages=c("scikit-learn=1.6.1", "numpy=2.2.2")
+)
 ```
 
 We can then supply this environment's path to `basiliskRun()` to execute Python-based calculations.
 To demonstrate, we'll apply `r PyPiLink("scikit-learn")`'s truncated PCA on a random matrix.
 Note that the restrictions mentioned [above](#function-constraints) for `fun` are still applicable here.
 
-```{r, error=FALSE, message=FALSE}
-if (.Platform$OS.type != "windows") {
+```{r, error=FALSE, message=FALSE, eval=(.Platform$OS.type != "windows")}
 x <- matrix(rnorm(1000), ncol=10)
 basiliskRun(env=tmp, fun=function(mat) {
     module <- reticulate::import("sklearn.decomposition")
@@ -296,33 +267,21 @@ basiliskRun(env=tmp, fun=function(mat) {
     output <- runner$fit(mat) 
     output$singular_values_
 }, mat = x, testload="scipy.optimize")
-}
 ```
 
-`basiliskRun()` can also be used with conda environments constructed outside of **basilisk**.
+`basiliskRun()` can also be used with Python environments constructed outside of `r Biocpkg("basilisk")`.
 Of course, in this case, it is the user's responsibility to ensure that the environment is correctly provisioned.
-Some caution is also required as `r Biocpkg("basilisk")` is not guaranteed to work with environments created by a different version of conda, though problems seem to be rare in practice.
 
-```{r, error=FALSE, message=FALSE}
-if (.Platform$OS.type != "windows") {
+```{r, error=FALSE, message=FALSE, eval=(.Platform$OS.type != "windows")}
 library(reticulate)
 
-# In this case, we'll use reticulate directly to construct our conda
-# environment; though we'll cheat a little and use basilisk's conda
-# installation, otherwise reticulate will try to install its own miniconda.
 tmp2 <- file.path(getwd(), "basilisk-vignette-test2")
 if (!file.exists(tmp2)) {
-    conda.bin <- file.path(
-        basilisk.utils::getCondaDir(), 
-        basilisk.utils::getCondaBinary()
-    )
-    conda_install(tmp2, 
-        packages=c("scipy==1.15.1"), 
-        python_version="3.12", 
-        channels="conda-forge",
-        additional_create_args="--override-channels",
-        additional_install_args="--override-channels",
-        conda=conda.bin
+    py.cmd <- suppressMessages(install_python(defaultPythonVersion))
+    virtualenv_install(
+        envname=tmp2,
+        python_version=py.cmd,
+        packages="scipy==1.15.1"
     )
 }
 
@@ -331,10 +290,9 @@ basiliskRun(env=tmp2, fun=function(mat) {
     norm <- module$norm
     norm$cdf(c(-1, 0, 1))
 }, mat = x, testload="scipy.optimize")
-}
 ```
 
-It is worth highlighting the fact that we were able to call `basiliskRun()` successfully on two different environments within the same R session.
+Notice how we were able to call `basiliskRun()` successfully on two different environments within the same R session.
 This enables the construction of complex analysis workflows that span across R and multiple Python environments.
 
 # Session information {-}

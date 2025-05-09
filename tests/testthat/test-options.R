@@ -1,4 +1,3 @@
-# Tests that the global options work as expected.
 # library(testthat); library(basilisk); source("test-options.R")
 
 test_that("global sharing option setting/getting works as expected", {

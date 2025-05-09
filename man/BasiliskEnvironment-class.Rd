@@ -17,12 +17,11 @@ It is used by \code{\link{basiliskStart}} to perform lazy installation.
 \item \code{envname}, string containing the name of the environment.
 Environment names starting with an underscore are reserved for internal use.
 \item \code{pkgname}, string containing the name of the package that owns the environment.
-\item \code{packages}, character vector containing the names of the required Python packages from conda,
+\item \code{packages}, character vector containing the names of the required Python packages from PyPI.
 see \code{\link{setupBasiliskEnv}} for requirements.
-\item \code{channels}, character vector specifying the Conda channels to search,
-see \code{\link{setupBasiliskEnv}} for detials.
-\item \code{pip}, character vector containing names of additional Python packages from PyPi,
-see \code{\link{setupBasiliskEnv}} for requirements.
+\item \code{channels}, deprecated and ignored.
+\item \code{pip}, appended to \code{packages}.
+Provided for back-compatibility only.
 \item \code{paths}, character vector containing relative paths to Python packages to be installed via \code{pip}.
 These paths are interpreted relative to the system directory of \code{pkgname},
 i.e., they are appended to the output of \code{\link{system.file}} to obtain absolute paths for \code{\link{setupBasiliskEnv}}.

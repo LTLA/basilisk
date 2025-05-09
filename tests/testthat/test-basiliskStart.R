@@ -1,7 +1,7 @@
 # Testing the start and stopping abilities of basilisk.
 # All operations are performed via callr to avoid loading Python into the test session.
 #
-# library(basilisk); library(testthat); source("setup.R"); source("test-start.R")
+# library(basilisk); library(testthat); source("setup.R"); source("test-basiliskStart.R")
 
 #################################################################
 
@@ -9,7 +9,6 @@ library(callr)
 
 new.version <- sub(".*==", "", test.pandas)
 old.version <- sub(".*==", "", old.pandas)
-basilisk.utils::installConda()
 
 tA <- file.path(client.dir, "my_package_A") 
 setupBasiliskEnv(tA, c(test.pandas, test.pandas.deps))
@@ -91,11 +90,11 @@ process_check <- function(version, envir, ...) {
     TRUE
 }
 
-preloaded_check <- function(version, envir, ...) {
+preloaded_check <- function(version, preload, envir, ...) {
     # Checking what happens when Python is already loaded.
     library(basilisk)
     library(testthat)
-    useBasiliskEnv(basilisk.utils::getCondaDir())
+    useBasiliskEnv(preload)
 
     proc <- basiliskStart(envir, ...)
     test.version <- basiliskRun(proc, fun=function() {
@@ -103,7 +102,11 @@ preloaded_check <- function(version, envir, ...) {
     })
     expect_identical(version, test.version)
 
-    expect_false(is.environment(proc))
+    if (preload != envir) {
+        expect_false(is.environment(proc))
+    } else {
+        expect_true(is.environment(proc))
+    }
 
     basiliskStop(proc)
 
@@ -161,8 +164,11 @@ test_that("basilisk forks when possible", { # ... though on windows, this just u
     expect_true(r(process_check, args=list(version=old.version, envir=tB)))
 
     # Forcing basilisk to use sockets by loading another virtual environment in advance.
-    expect_true(r(preloaded_check, args=list(version=new.version, envir=tA)))
-    expect_true(r(preloaded_check, args=list(version=old.version, envir=tB)))
+    expect_true(r(preloaded_check, args=list(version=new.version, preload=tB, envir=tA)))
+    expect_true(r(preloaded_check, args=list(version=old.version, preload=tA, envir=tB)))
+
+    expect_true(r(preloaded_check, args=list(version=new.version, preload=tA, envir=tA)))
+    expect_true(r(preloaded_check, args=list(version=old.version, preload=tB, envir=tB)))
 
     # Respects persistence of variables.
     expect_true(r(persistence_check, args=list(version=new.version, envir=tA, shared=FALSE)))
@@ -176,8 +182,11 @@ test_that("basilisk uses sockets correctly", {
     expect_true(r(process_check, args=list(version=old.version, envir=tB, fork=FALSE)))
 
     # Forcing basilisk to use sockets by loading another virtual environment in advance.
-    expect_true(r(preloaded_check, args=list(version=new.version, envir=tA, fork=FALSE)))
-    expect_true(r(preloaded_check, args=list(version=old.version, envir=tB, fork=FALSE)))
+    expect_true(r(preloaded_check, args=list(version=new.version, preload=tB, envir=tA, fork=FALSE)))
+    expect_true(r(preloaded_check, args=list(version=old.version, preload=tA, envir=tB, fork=FALSE)))
+                                                                             
+    expect_true(r(preloaded_check, args=list(version=new.version, preload=tA, envir=tA, fork=FALSE)))
+    expect_true(r(preloaded_check, args=list(version=old.version, preload=tB, envir=tB, fork=FALSE)))
 
     # Respects persistence of variables.
     expect_true(r(persistence_check, args=list(version=new.version, envir=tA, shared=FALSE, fork=FALSE)))
@@ -186,14 +195,21 @@ test_that("basilisk uses sockets correctly", {
 
 ###########################################################
 
-test_that("basilisk hits the fallback R", {
-    setBasiliskForceFallback(TRUE)
-    on.exit(setBasiliskForceFallback(FALSE))
+test_that("basilisk unsets key environment variables correctly", {
+    expect_true(r(function(envir) {
+        library(basilisk)
+        library(testthat)
 
-    expect_true(r(process_check, args=list(version=new.version, envir=tA, fork=FALSE)))
-    expect_true(r(process_check, args=list(version=old.version, envir=tB, fork=FALSE)))
+        pypath <- "/usr/bin/whee"
+        Sys.setenv(PYTHONPATH=pypath)
+        expect_identical(Sys.getenv("PYTHONPATH"), pypath)
 
-    # Respects persistence of variables.
-    expect_true(r(persistence_check, args=list(version=new.version, envir=tA, shared=FALSE, fork=FALSE)))
-    expect_true(r(persistence_check, args=list(version=old.version, envir=tB, shared=FALSE, fork=FALSE)))
+        cl <- basiliskStart(envir)
+        expect_identical(Sys.getenv("PYTHONPATH", ""), "")
+        basiliskStop(cl)
+
+        expect_identical(Sys.getenv("PYTHONPATH"), pypath)
+
+        TRUE
+    }, args=list(envir=tA)))
 })

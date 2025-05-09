@@ -7,7 +7,6 @@
 #' \itemize{
 #' \item For \code{setBasiliskFork}, whether forking should be used when available.
 #' \item For \code{setBasiliskShared}, whether the shared Python instance can be set in the R session.
-#' \item For \code{setBasiliskForceFallback}, whether to force the use of the last resort fallback.
 #' \item For \code{setBasiliskCheckVersions}, whether to check for properly versioned package strings in \code{\link{setupBasiliskEnv}}.
 #' }
 #'
@@ -33,16 +32,15 @@
 #'
 #' Developers may wish to set \code{setBasiliskShared(FALSE)} and \code{setBasiliskFork(FALSE)} during unit testing,
 #' to ensure that their functions do not make incorrect assumptions about the calling environment used in \code{\link{basiliskRun}}.
-#' Similarly, setting \code{setBasiliskForceFallback(TRUE)} is useful for testing that \code{\link{basiliskRun}} works inside a minimalistic R installation.
 #'
 #' @section Disabling package version checks:
 #' By default, \code{\link{setupBasiliskEnv}} requires versions for all requested Python packages.
 #' However, in some cases, the exact version of the packages may not be known beforehand.
-#' Developers can set \code{setBasiliskCheckVersions(FALSE)} to disable all version checks, instead allowing conda to choose appropriate versions for the initial installation.
+#' Developers can set \code{setBasiliskCheckVersions(FALSE)} to disable all version checks, instead allowing \code{pip} to choose appropriate versions for the initial installation.
 #' The resulting environment can then be queried using \code{\link{listPackages}} to obtain the explicit versions of all Python packages.
 #'
 #' Needless to say, this option should only be used during the initial phases of developing a \pkg{basilisk} client.
-#' Once a suitable environment is created by conda, Python package versions should be pinned in \code{\link{setupBasiliskEnv}}.
+#' Once a suitable environment is created, Python package versions should be pinned in \code{\link{setupBasiliskEnv}}.
 #' This ensures that all users are creating the intended environment for greater reproducibility (and easier debugging).
 #' 
 #' @author Aaron Lun
@@ -52,6 +50,7 @@
 #' 
 #' @seealso
 #' \code{\link{basiliskStart}}, where these options are used.
+#'
 #' @export
 #' @rdname basiliskOptions
 getBasiliskFork <- function() {
@@ -80,20 +79,6 @@ setBasiliskShared <- function(value) {
     value
 }
 
-#' @export
-#' @rdname basiliskOptions
-getBasiliskForceFallback <- function() {
-    globals$get("force.fallback")
-}
-
-#' @export
-#' @rdname basiliskOptions
-setBasiliskForceFallback <- function(value) {
-    .check_logical(value)
-    globals$set(force.fallback=value)
-    value
-}
-
 .check_logical <- function(value) {
     if (length(value)!=1 || is.na(value)) {
         stop("'value' should be a non-NA logical scalar")
@@ -113,3 +98,24 @@ setBasiliskCheckVersions <- function(value) {
 getBasiliskCheckVersions <- function() {
     !globals$get("no.version")
 }
+
+globals <- (function () {
+    current <- list(
+        fork=TRUE,
+        shared=TRUE,
+        force.fallback=FALSE,
+        no.version=FALSE
+    )
+
+    list(
+        set=function(...) {
+            replacements <- list(...)
+            common <- intersect(names(current), names(replacements))
+            current[common] <<- replacements[common]
+            invisible(NULL)
+        },
+        get=function(name) {
+            current[[name]]
+        }
+    )
+})()

@@ -11,27 +11,25 @@ obtainEnvironmentPath(env)
 Alternatively a string containing a path to an existing environment.}
 }
 \value{
-String containing the path to an instantiated Conda environment.
+String containing the path to an instantiated virtual environment.
 
-For a BasiliskEnvironment \code{env}, the function will also lazily create the environment if \code{useSystemDir()} returns \code{FALSE}
-and the environment does not already exist.
+For a BasiliskEnvironment \code{env}, the function will also lazily create the environment,
+if \code{useSystemDir()} returns \code{FALSE} and the environment does not already exist.
 }
 \description{
-Obtain a path to a Conda environment, lazily installing it if necessary.
+Obtain a path to a virtual environment, lazily creating it if it does not already exist.
 }
 \examples{
 if (.Platform$OS.type != "windows") {
- \dontshow{basilisk.utils::installConda()}
+  tmploc <- file.path(tempdir(), "my_package_A")
+  if (!file.exists(tmploc)) {
+      setupBasiliskEnv(tmploc, c('pandas=1.4.3'))
+  }
+  obtainEnvironmentPath(tmploc)
 
- tmploc <- file.path(tempdir(), "my_package_A")
- if (!file.exists(tmploc)) {
-     setupBasiliskEnv(tmploc, c('pandas=2.2.3'))
- }
- obtainEnvironmentPath(tmploc)
-
- env <- BasiliskEnvironment("test_env", "basilisk", 
-     packages=c("scikit-learn=1.6.1", "pandas=2.2.3"))
- \dontrun{obtainEnvironmentPath(env)}
+  env <- BasiliskEnvironment("test_env", "basilisk", 
+      packages=c("scikit-learn=1.1.1", "pandas=1.43.1"))
+  \dontrun{obtainEnvironmentPath(env)}
 }
 }
 \author{

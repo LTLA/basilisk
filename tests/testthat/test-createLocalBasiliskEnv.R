@@ -1,5 +1,4 @@
-# Testing the createLocalBasiliskEnv function.
-# library(testthat); library(basilisk); source("setup.R"); source("test-local.R"); 
+# library(testthat); library(basilisk); source("setup.R"); source("test-createLocalBasiliskEnv.R"); 
 
 target <- file.path(client.dir, "locality")
 

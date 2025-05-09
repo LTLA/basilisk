@@ -3,68 +3,78 @@
 #' Use \pkg{basilisk} environments for isolated execution of Python code with appropriate versions of all Python packages.
 #' 
 #' @param envpath String containing the path to the \pkg{basilisk} environment to use. 
-#' @param full.activation Logical scalar, see \code{\link{activateEnvironment}} for details.
+#' @param full.activation Deprecated and ignored.
 #' 
 #' @return 
 #' The function will attempt to load the specified \pkg{basilisk} environment into the R session,
 #' possibly with the modification of some environment variables (see Details).
-#' A \code{NULL} is invisibly returned.
+#'
+#' A function is invisibly returned that accepts no arguments and resets all environment variables to their original values prior to the \code{useBasiliskEnv} call.
 #'
 #' @details
+#' \code{useBasiliskEnv} will load the Python binary at \code{envpath} (or specifically, its shared library) into the current R session via \pkg{reticulate}.
+#' Users can then use, e.g., \code{\link[reticulate]{import}} to access functionality in the Python packages installed in the virtual environment.
+#'
+#' To ensure that the correct packages are used, \code{useBasiliskEnv} will unset environment variables like \code{PYTHONPATH} and \code{PYTHONHOME}.
+#' These can be restored by running the function returned by \code{useBasiliskEnv}.
+#' 
 #' It is unlikely that developers should ever need to call \code{\link{useBasiliskEnv}} directly.
 #' Rather, this interaction should be automatically handled by \code{\link{basiliskStart}}.
-#' 
-#' This function will modify a suite of environment variables as a side effect
-#' - see \dQuote{Persistence of environment variables} in \code{?\link{basiliskStart}} for the rationale.
 #'
 #' @author Aaron Lun
 #' 
 #' @examples
 #' if (.Platform$OS.type != "windows") {
-#'  \dontshow{basilisk.utils::installConda()}
+#'   tmploc <- file.path(tempdir(), "my_package_A")
+#'   if (!file.exists(tmploc)) {
+#'       setupBasiliskEnv(tmploc, c('pandas==2.2.3'))
+#'   }
 #' 
-#'  tmploc <- file.path(tempdir(), "my_package_A")
-#'  if (!file.exists(tmploc)) {
-#'      setupBasiliskEnv(tmploc, c('pandas==2.2.3'))
-#'  }
-#' 
-#'  # This may or may not work, depending on whether a Python instance
-#'  # has already been loaded into this R session.
-#'  try(useBasiliskEnv(tmploc))
-#' 
-#'  # This will definitely not work, as the available Python is already set.
-#'  baseloc <- basilisk.utils::getCondaDir()
-#'  status <- try(useBasiliskEnv(baseloc))
-#' 
-#'  # ... except on Windows, which somehow avoids tripping the error.
-#'  stopifnot(is(status, "try-error") || basilisk.utils::isWindows())
+#'   # This may or may not work, depending on whether a Python instance
+#'   # has already been loaded into this R session.
+#'   try(useBasiliskEnv(tmploc))
 #' }
 #'
 #' @seealso
 #' \code{\link{basiliskStart}}, for how these \pkg{basilisk} environments should be used.
 #'
 #' @export
-#' @import basilisk.utils
-#' @importFrom reticulate use_condaenv py_config
+#' @importFrom reticulate use_virtualenv py_config
 useBasiliskEnv <- function(envpath, full.activation=NA) {
     envpath <- normalizePath(envpath, mustWork=TRUE)
 
-    activateEnvironment(envpath, full.activation=full.activation)
-    reticulate::use_condaenv(envpath, required=TRUE)
+    # Unset these so we don't pick up packages from other locations.
+    collected <- list()
+    for (env in c("PYTHONPATH", "PYTHONHOME")) {
+        out <- Sys.getenv(env, NA)
+        if (!is.na(out)) {
+            collected[[env]] <- out
+            Sys.unsetenv(env)
+        }
+    }
 
-    # use_condaenv doesn't actually cause Python to be loaded immediately, 
-    # so we force the issue to seal the deal.
-    reticulate::py_config() 
+    use_virtualenv(envpath, required=TRUE)
 
-    invisible(NULL)
+    # use_virtualenv doesn't actually cause Python to be loaded immediately, 
+    # so we use py_config() to forcibly load it and prevent other Python
+    # instances from filling the slot.
+    py_config() 
+
+    invisible(function() {
+        if (length(collected)) {
+            do.call(Sys.setenv, collected)
+        }
+    })
 }
 
 #' @importFrom reticulate py_config 
-.same_as_loaded <- function(envpath) 
-# Checking whether we're the same as the existing python instance,
-# which would indicate that we correctly loaded `envpath`.
-{
-    expected <- normalizePath(getPythonBinary(envpath)) 
-    actual <- normalizePath(py_config()$python)
+.same_as_loaded <- function(envpath) {
+    # - Checking whether we're the same as the existing python instance, which
+    #   would indicate that we correctly loaded `envpath`. The normalization of
+    #   the environment ensures that we're matching the path in useBasiliskEnv.
+    # - Don't normalize the binary path itself as this is a symlink.
+    # - Set winslash= to match py_config()'s use of forward slashes. 
+    expected <- getPythonBinary(normalizePath(envpath, winslash="/"))
+    actual <- py_config()$python
     identical(expected, actual)
 }
