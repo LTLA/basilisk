@@ -108,6 +108,7 @@ setupBasiliskEnv <- function(envpath, packages, channels=NULL, pip=NULL, paths=N
     # Determining the Python version to use (possibly from `packages=`).
     if (any(is.py <- grepl("^python=", packages))) {
         version <- sub("^python=+", "", packages[is.py][1])
+        packages <- packages[!is.py]
     } else {
         version <- defaultPythonVersion
     }
