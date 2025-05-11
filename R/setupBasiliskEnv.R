@@ -73,7 +73,7 @@
 #'
 #' @export
 #' @aliases defaultPythonVersion
-#' @importFrom reticulate install_python virtualenv_create virtualenv_install
+#' @importFrom reticulate install_python virtualenv_create
 #' @importFrom utils head
 setupBasiliskEnv <- function(envpath, packages, channels=NULL, pip=NULL, paths=NULL) {
     packages <- sub("([^=])=([^=])", "\\1==\\2", packages)
@@ -131,18 +131,12 @@ setupBasiliskEnv <- function(envpath, packages, channels=NULL, pip=NULL, paths=N
         envpath <- file.path(getwd(), envpath)
     }
 
-    if (length(packages)) {
-        virtualenv_install(
-            envname=envpath, 
-            python_version=py.cmd,
-            packages=packages
-        )
-    } else {
-        virtualenv_create(
-            envname=envpath, 
-            python_version=py.cmd
-        )
-    }
+    virtualenv_create(
+        envname=envpath, 
+        python=py.cmd,
+        packages=packages,
+        system_site_packages=FALSE
+    )
 
     if (length(paths)) {
         py.env.cmd <- getPythonBinary(envpath)
