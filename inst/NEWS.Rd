@@ -2,6 +2,13 @@
 \title{basilisk News}
 \encoding{UTF-8}
 
+\section{Version 1.22.0}{\itemize{
+\item Replace conda with PyEnv + virtualenv for Python management and environment creation.
+This aims to avoid GLIBCXX version errors from mismatches in system libraries between conda and R.
+Package developers should now directly use PyPI package versions in their \code{packages=} specification instead of the conda package versions.
+Administrators also have more power and flexibility to override the Python instance used by \code{setupBasiliskEnv}. 
+}}
+
 \section{Version 1.18.0}{\itemize{
 \item Switch to the latest Miniforge installer (24.3.0-0) by default.
 This is preconfigured to use the conda-forge channel and avoids issues with the non-FOSS licensing of the Anaconda repositories.
