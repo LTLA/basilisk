@@ -12,14 +12,12 @@
 #' For \code{listPythonVersion}, a string containing the default version of Python.
 #' 
 #' @examples
-#' if (.Platform$OS.type != "windows") {
-#'   tmploc <- file.path(tempdir(), "my_package_A")
-#'   if (!file.exists(tmploc)) {
-#'       setupBasiliskEnv(tmploc, c('pandas=1.4.3'))
-#'   }
-#'   listPackages(tmploc)
-#'   listPythonVersion(tmploc)
+#' tmploc <- file.path(tempdir(), "my_package_A")
+#' if (!file.exists(tmploc)) {
+#'     setupBasiliskEnv(tmploc, c('pandas=1.4.3'))
 #' }
+#' listPackages(tmploc)
+#' listPythonVersion(tmploc)
 #' 
 #' @export
 listPackages <- function(env) {

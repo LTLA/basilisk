@@ -31,16 +31,14 @@ It is unlikely that developers should ever need to call \code{\link{useBasiliskE
 Rather, this interaction should be automatically handled by \code{\link{basiliskStart}}.
 }
 \examples{
-if (.Platform$OS.type != "windows") {
-  tmploc <- file.path(tempdir(), "my_package_A")
-  if (!file.exists(tmploc)) {
-      setupBasiliskEnv(tmploc, c('pandas==2.2.3'))
-  }
-
-  # This may or may not work, depending on whether a Python instance
-  # has already been loaded into this R session.
-  try(useBasiliskEnv(tmploc))
+tmploc <- file.path(tempdir(), "my_package_A")
+if (!file.exists(tmploc)) {
+    setupBasiliskEnv(tmploc, c('pandas==2.2.3'))
 }
+
+# This may or may not work, depending on whether a Python instance
+# has already been loaded into this R session.
+try(useBasiliskEnv(tmploc))
 
 }
 \seealso{

@@ -19,13 +19,11 @@
 #' and that concurrent access to the environment is done safely.
 #'
 #' @examples
-#' if (.Platform$OS.type != "windows") {
-#'  tmploc <- file.path(tempdir(), "my_package_C")
-#'  tmp <- createLocalBasiliskEnv(tmploc, packages="pandas=2.2.3")
-#'  basiliskRun(env=tmp, fun=function() { 
-#'      X <- reticulate::import("pandas"); X$`__version__` 
-#'  }, testload="pandas")
-#' }
+#' tmploc <- file.path(tempdir(), "my_package_C")
+#' tmp <- createLocalBasiliskEnv(tmploc, packages="pandas=2.2.3")
+#' basiliskRun(env=tmp, fun=function() { 
+#'     X <- reticulate::import("pandas"); X$`__version__` 
+#' })
 #'
 #' @export
 #' @importFrom dir.expiry lockDirectory unlockDirectory touchDirectory

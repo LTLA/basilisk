@@ -20,17 +20,16 @@ if \code{useSystemDir()} returns \code{FALSE} and the environment does not alrea
 Obtain a path to a virtual environment, lazily creating it if it does not already exist.
 }
 \examples{
-if (.Platform$OS.type != "windows") {
-  tmploc <- file.path(tempdir(), "my_package_A")
-  if (!file.exists(tmploc)) {
-      setupBasiliskEnv(tmploc, c('pandas=1.4.3'))
-  }
-  obtainEnvironmentPath(tmploc)
-
-  env <- BasiliskEnvironment("test_env", "basilisk", 
-      packages=c("scikit-learn=1.1.1", "pandas=1.43.1"))
-  \dontrun{obtainEnvironmentPath(env)}
+tmploc <- file.path(tempdir(), "my_package_A")
+if (!file.exists(tmploc)) {
+    setupBasiliskEnv(tmploc, c('pandas=1.4.3'))
 }
+obtainEnvironmentPath(tmploc)
+
+env <- BasiliskEnvironment("test_env", "basilisk", 
+    packages=c("scikit-learn=1.1.1", "pandas=1.43.1"))
+\dontrun{obtainEnvironmentPath(env)}
+
 }
 \author{
 Aaron Lun

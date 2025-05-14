@@ -142,42 +142,40 @@ This will place each package's Python environments in the R system directory, wh
 }
 
 \examples{
-if (.Platform$OS.type != "windows") {
-    tmploc <- file.path(tempdir(), "my_package_A")
-    if (!file.exists(tmploc)) {
-        setupBasiliskEnv(tmploc, c('pandas=2.2.3'))
-    }
-  
-    # Pulling out the pandas version, as a demonstration:
-    cl <- basiliskStart(tmploc, testload="pandas")
-    basiliskRun(proc=cl, function() { 
-        X <- reticulate::import("pandas"); X$`__version__` 
-    })
-    basiliskStop(cl)
-  
-    # This happily co-exists with our other environment:
-    tmploc2 <- file.path(tempdir(), "my_package_B")
-    if (!file.exists(tmploc2)) {
-        setupBasiliskEnv(tmploc2, c('pandas=2.2.2'))
-    }
-    
-    cl2 <- basiliskStart(tmploc2, testload="pandas")
-    basiliskRun(proc=cl2, function() { 
-        X <- reticulate::import("pandas"); X$`__version__` 
-    })
-    basiliskStop(cl2)
-  
-    # Persistence of variables is possible within a Start/Stop pair.
-    cl <- basiliskStart(tmploc)
-    basiliskRun(proc=cl, function(store) {
-        store$snake.in.my.shoes <- 1
-        invisible(NULL)
-    }, persist=TRUE)
-    basiliskRun(proc=cl, function(store) {
-        return(store$snake.in.my.shoes)
-    }, persist=TRUE)
-    basiliskStop(cl)
+tmploc <- file.path(tempdir(), "my_package_A")
+if (!file.exists(tmploc)) {
+    setupBasiliskEnv(tmploc, c('pandas=2.2.3'))
 }
+
+# Pulling out the pandas version, as a demonstration:
+cl <- basiliskStart(tmploc) 
+basiliskRun(proc=cl, function() { 
+    X <- reticulate::import("pandas"); X$`__version__` 
+})
+basiliskStop(cl)
+
+# This happily co-exists with our other environment:
+tmploc2 <- file.path(tempdir(), "my_package_B")
+if (!file.exists(tmploc2)) {
+    setupBasiliskEnv(tmploc2, c('pandas=2.2.2'))
+}
+
+cl2 <- basiliskStart(tmploc2) 
+basiliskRun(proc=cl2, function() { 
+    X <- reticulate::import("pandas"); X$`__version__` 
+})
+basiliskStop(cl2)
+
+# Persistence of variables is possible within a Start/Stop pair.
+cl <- basiliskStart(tmploc)
+basiliskRun(proc=cl, function(store) {
+    store$snake.in.my.shoes <- 1
+    invisible(NULL)
+}, persist=TRUE)
+basiliskRun(proc=cl, function(store) {
+    return(store$snake.in.my.shoes)
+}, persist=TRUE)
+basiliskStop(cl)
 
 }
 \seealso{

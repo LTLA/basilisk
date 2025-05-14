@@ -61,11 +61,9 @@
 #' This can occasionally be useful to prevent unexpected installations of new Python instances.
 #'
 #' @examples
-#' if (.Platform$OS.type != "windows") {
-#'     tmploc <- file.path(tempdir(), "my_package_A")
-#'     if (!file.exists(tmploc)) {
-#'         setupBasiliskEnv(tmploc, c('pandas=2.2.3'))
-#'     }
+#' tmploc <- file.path(tempdir(), "my_package_A")
+#' if (!file.exists(tmploc)) {
+#'     setupBasiliskEnv(tmploc, c('pandas=2.2.3'))
 #' }
 #'
 #' @seealso
