@@ -18,8 +18,6 @@ old <- setVariable("BASILISK_USE_SYSTEM_DIR", NA)
 old.2 <- setVariable("BASILISK_EXTERNAL_DIR", tmp)
 
 test_that("obtainEnvironmentPath works as expected", {
-    skip_on_os("windows") # see above.
-
     testpkg <- "basilisk"
     env <- BasiliskEnvironment(envname="test", pkgname=testpkg, packages=test.pandas)
     dummy <- file.path(getExternalDir(), testpkg, "0.0.1")
