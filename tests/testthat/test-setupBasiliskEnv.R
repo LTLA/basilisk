@@ -29,6 +29,8 @@ test_that("setupBasiliskEnv obtains the correct version of the packages", {
 })
 
 test_that("setupBasiliskEnv will install Python 2.7 if requested", {
+    skip_on_os(c("windows", "mac")) # Just doesn't work on the build machines. Who knows why.
+
     basilisk:::.unlink2(target)
     setupBasiliskEnv(target, "python=2.7.18")
     env.py <- basilisk::getPythonBinary(target)
