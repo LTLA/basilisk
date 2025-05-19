@@ -2,8 +2,8 @@
 
 |Environment|Status|
 |---|---|
-|BioC-release|[![Release OK](https://bioconductor.org/shields/build/release/bioc/basilisk.svg)](http://bioconductor.org/checkResults/release/bioc-LATEST/basilisk/)|
-|BioC-devel|[![Devel OK](https://bioconductor.org/shields/build/devel/bioc/basilisk.svg)](http://bioconductor.org/checkResults/devel/bioc-LATEST/basilisk/)|
+|BioC-release|[![Release OK](https://bioconductor.org/shields/build/release/bioc/basilisk.svg)](https://bioconductor.org/checkResults/release/bioc-LATEST/basilisk/)|
+|BioC-devel|[![Devel OK](https://bioconductor.org/shields/build/devel/bioc/basilisk.svg)](https://bioconductor.org/checkResults/devel/bioc-LATEST/basilisk/)|
 
 **basilisk** provides a standardized mechanism for handling Python dependencies within Bioconductor packages.
 It does so by automatically provisioning and managing one or more Conda environments per BioC package,
