@@ -17,7 +17,7 @@ test_that("createLocalBasiliskEnv obtains the correct version of the packages", 
     # Works with a path.
     pandas.ver <- basiliskRun(env=tmp, fun=function() { 
         X <- reticulate::import("pandas"); X$`__version__` 
-    })
+    }, shared=FALSE)
     expect_identical(pandas.ver, sub("pandas=*", "", test.pandas))
 
     # Next creation attempt should be a no-op.
