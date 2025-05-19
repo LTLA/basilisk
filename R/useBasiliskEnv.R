@@ -43,7 +43,7 @@ useBasiliskEnv <- function(envpath, full.activation=NA) {
 
     # Unset these so we don't pick up packages from other locations.
     collected <- list()
-    for (env in c("PYTHONPATH", "PYTHONHOME")) {
+    for (env in c("PYTHONPATH", "PYTHONHOME", "RETICULATE_PYTHON", "RETICULATE_PYTHON_ENV")) {
         out <- Sys.getenv(env, NA)
         if (!is.na(out)) {
             collected[[env]] <- out
