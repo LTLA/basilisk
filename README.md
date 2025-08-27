@@ -6,8 +6,8 @@
 |BioC-devel|[![Devel OK](https://bioconductor.org/shields/build/devel/bioc/basilisk.svg)](https://bioconductor.org/checkResults/devel/bioc-LATEST/basilisk/)|
 
 **basilisk** provides a standardized mechanism for handling Python dependencies within Bioconductor packages.
-It does so by automatically provisioning and managing one or more Conda environments per BioC package,
-ensuring that the end-user is not burdened with the responsibility of meeting any Python-based `SystemRequirements`.
+It automatically manages different Python versions and virtual environments for each BioC package,
+ensuring that users are not burdened with the responsibility of satisfying any Python-based `SystemRequirements`.
 We integrate with **reticulate** to allow intuitive calling of Python code within R,
 with additional protection to ensure that multiple Python environments can be called within the same R session.
 
